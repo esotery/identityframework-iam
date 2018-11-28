@@ -1,0 +1,21 @@
+version: '1.0.{build}'
+image: Visual Studio 2017
+branches:
+  only:
+  - master
+init:
+  - cmd: git config --global core.autocrlf true
+install:
+before_build:
+  - cmd: dotnet --version
+  - cmd: dotnet restore ./lib/IdentityFramework.Iam --verbosity m
+build_script:
+  - cmd: dotnet publish ./lib/IdentityFramework.Iam
+after_build:
+artifacts:
+clone_depth: 1
+test_script:
+  - cmd: dotnet restore ./test/IdentityFramework.Iam.Test --verbosity m
+  - cmd: dotnet test ./test/IdentityFramework.Iam.Test\IdentityFramework.Iam.Test
+on_finish :
+deploy: off
