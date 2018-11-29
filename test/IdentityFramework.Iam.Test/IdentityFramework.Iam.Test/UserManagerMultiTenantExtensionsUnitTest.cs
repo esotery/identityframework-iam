@@ -78,6 +78,32 @@ namespace IdentityFramework.Iam.Test
         }
 
         [TestMethod]
+        public async Task RemoveFromRoleTest()
+        {
+            await userManager.AddToRoleAsync(roleStore, user, 1, "admin");
+
+            Assert.IsNotNull(userManager.GetRolesAsync(roleStore, user, 1).Result.FirstOrDefault(x => x == "admin"));
+
+            await userManager.RemoveFromRoleAsync(roleStore, user, 1, "admin");
+
+            Assert.IsNull(userManager.GetRolesAsync(roleStore, user, 1).Result.FirstOrDefault(x => x == "admin"));
+        }
+
+        [TestMethod]
+        public async Task RemoveFromRolesTest()
+        {
+            await userManager.AddToRolesAsync(roleStore, user, 1, "admin", "manager");
+
+            Assert.IsTrue(userManager.GetRolesAsync(roleStore, user, 1).Result.Contains("admin"));
+            Assert.IsTrue(userManager.GetRolesAsync(roleStore, user, 1).Result.Contains("manager"));
+
+            await userManager.RemoveFromRolesAsync(roleStore, user, 1, "admin", "manager");
+
+            Assert.IsFalse(userManager.GetRolesAsync(roleStore, user, 1).Result.Contains("admin"));
+            Assert.IsFalse(userManager.GetRolesAsync(roleStore, user, 1).Result.Contains("manager"));
+        }
+
+        [TestMethod]
         public async Task IsInRoleTest()
         {
             await userManager.AddToRolesAsync(roleStore, user, 1, "admin", "manager");
