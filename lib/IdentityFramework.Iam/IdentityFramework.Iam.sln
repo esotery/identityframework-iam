@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.28124.53
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IdentityFramework.Iam.Core", "IdentityFramework.Iam.Core\IdentityFramework.Iam.Core.csproj", "{F40B841A-BFE9-4858-B99D-DCADA13F50C3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IdentityFramework.Iam.Core", "IdentityFramework.Iam.Core\IdentityFramework.Iam.Core.csproj", "{F40B841A-BFE9-4858-B99D-DCADA13F50C3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IdentityFramework.Iam.Ef", "IdentityFramework.Iam.Ef\IdentityFramework.Iam.Ef.csproj", "{84B32FF4-3E2D-49BA-8C7F-15023C4CCE19}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{F40B841A-BFE9-4858-B99D-DCADA13F50C3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F40B841A-BFE9-4858-B99D-DCADA13F50C3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F40B841A-BFE9-4858-B99D-DCADA13F50C3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{84B32FF4-3E2D-49BA-8C7F-15023C4CCE19}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{84B32FF4-3E2D-49BA-8C7F-15023C4CCE19}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{84B32FF4-3E2D-49BA-8C7F-15023C4CCE19}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{84B32FF4-3E2D-49BA-8C7F-15023C4CCE19}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
