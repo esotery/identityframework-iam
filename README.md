@@ -42,6 +42,13 @@ With the IdentityFramework.Iam, you can achieve following in the multi-tenant sc
 + roles can have different permissions/policies in different tenants
 + allow to attach permission/policy to a specific user for a specific tenant without the user being in some role
 
+## Upcoming features
+
+Sorted by priority
+
+1. IdentityFramework.Iam.Ef - provide default implementation of *IIamProvider* and *IIamMultiTenantProvider<T>* over *IdentityContext*
+2. IdentityFramework.Iam.Mvc - provide both REST API and MVC endpoints to make managing users, roles and their connections to permissions easie. Sort of admin dashboard for IAM.
+
 ## Usage
 
 The basic usage is pretty simple. It all revolves around concept of *IamProvider* which enables you to create the mappings between permissions to your resources and the roles allowed to access them. You have two choices when it comes to IAM.
@@ -130,10 +137,10 @@ The framework comes loaded with extensions to UserManager and ClaimsIdentity.
 #### UserManager
 
 + Policy handling
-..+ AttachPolicy(ies) - attaches a permission(s) to a specific user, granting an access to perform a specific action
-..+ DetachPolicy(ies) - dettaches permission(s) from a specific user, denying an access to perform a specific action
-..+ GetAttachedPolicies - gets permissions to operations user can perform
-..+ GetUsersAttachedToPolicies - gets users attached to specific permissions
+  + AttachPolicy(ies) - attaches a permission(s) to a specific user, granting an access to perform a specific action
+  + DetachPolicy(ies) - dettaches permission(s) from a specific user, denying an access to perform a specific action
+  + GetAttachedPolicies - gets permissions to operations user can perform
+  + GetUsersAttachedToPolicies - gets users attached to specific permissions
 
 Of course the multi-tenant extensions for *UserManager* allow you to do the same for specific tenant id. This applies also to user to role handling.
 
@@ -206,3 +213,19 @@ public ClaimsIdentity GenerateClaimsIdentity<TKey>(User user, IDictionary<TKey, 
 ```cs
 identity = jwtFactory.GenerateClaimsIdentity(user, await roleStore.GetRolesAsync(user, CancellationToken.None), await claimStore.GetClaimsAsync(user, CancellationToken.None));
 ```
+
+## How does it work
+
+The IAM framework leverages the power of *IAuthorizationPolicyProvider*, which normally statically provides the policy object for a specific policy name. So when you are calling the *AddPolicy* as seen here:
+
+```cs
+services.AddAuthorization(options =>
+    {
+        options.AddPolicy("Values:GetList", policy =>
+            {
+                policy.RequireAuthenticatedRole(new string[] { "Viewer", "Editor", "Admin" });
+            });
+    });
+```
+
+it adds it to the *AuthorizationOptions* from where the *IAuthorizationPolicyProvider* usually picks it from. The IAM framework reimplements the *DefaultAuthorizationPolicyProvider* to build the policy from roles and claims got from *IIamProvider* instance. Since the *IIamProvider* is designed to get those roles and claims dynamically from some kind of storage, we are able to change who has access to the policy (who has permission to a resource) instantly.

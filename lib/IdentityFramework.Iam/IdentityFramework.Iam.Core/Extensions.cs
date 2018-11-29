@@ -65,6 +65,54 @@ namespace IdentityFramework.Iam.Core
         }
 
         /// <summary>
+        /// Removes from role asynchronously.
+        /// </summary>
+        /// <typeparam name="TUser">The type of the user.</typeparam>
+        /// <typeparam name="TKey">The type of the tenant id.</typeparam>
+        /// <param name="userManager">The user manager.</param>
+        /// <param name="roleStore">The role store.</param>
+        /// <param name="user">The user.</param>
+        /// <param name="tenantId">The tenant identifier.</param>
+        /// <param name="roleName">Name of the role.</param>
+        /// <returns></returns>
+        public static async Task<IdentityResult> RemoveFromRoleAsync<TUser, TKey>(this UserManager<TUser> userManager, IMultiTenantUserRoleStore<TUser, TKey> roleStore, TUser user, TKey tenantId, string roleName) where TUser : class
+        {
+            var ret = await userManager.RemoveFromRolesAsync<TUser, TKey>(roleStore, user, tenantId, roleName);
+
+            return ret;
+        }
+
+        /// <summary>
+        /// Removes from roles asynchronously.
+        /// </summary>
+        /// <typeparam name="TUser">The type of the user.</typeparam>
+        /// <typeparam name="TKey">The type of the tenant id.</typeparam>
+        /// <param name="userManager">The user manager.</param>
+        /// <param name="roleStore">The role store.</param>
+        /// <param name="user">The user.</param>
+        /// <param name="tenantId">The tenant identifier.</param>
+        /// <param name="roleNames">The role names.</param>
+        /// <returns></returns>
+        public static async Task<IdentityResult> RemoveFromRolesAsync<TUser, TKey>(this UserManager<TUser> userManager, IMultiTenantUserRoleStore<TUser, TKey> roleStore, TUser user, TKey tenantId, params string[] roleNames) where TUser : class
+        {
+            IdentityResult ret = null;
+
+            var ct = CancellationToken.None;
+
+            foreach (var roleName in roleNames)
+            {
+                if (await roleStore.IsInRoleAsync(user, tenantId, roleName, ct))
+                {
+                    await roleStore.RemoveFromRoleAsync(user, tenantId, roleName, ct);
+                }
+            }
+
+            ret = await userManager.UpdateAsync(user);
+
+            return ret;
+        }
+
+        /// <summary>
         /// Determines whether [is in role asynchronous] [the specified role store].
         /// </summary>
         /// <typeparam name="TUser">The type of the user.</typeparam>
