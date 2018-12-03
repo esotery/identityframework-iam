@@ -2,7 +2,7 @@
 
 namespace IdentityFramework.Iam.Ef.Model
 {
-    public class PolicyClaims<TKey> where TKey : IEquatable<TKey>
+    public class PolicyClaim<TKey> where TKey : IEquatable<TKey>
     {
         public TKey Id { get; set; }
 

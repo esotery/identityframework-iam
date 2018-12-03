@@ -9,12 +9,12 @@ using System.Threading.Tasks;
 
 namespace IdentityFramework.Iam.Ef
 {
-    public class IamProvider<TUser, TRole, TKey> : IIamProvider where TUser : IdentityUser<TKey> where TRole : IdentityRole<TKey> where TKey : IEquatable<TKey>
+    public class IamProvider<TUser, TRole, TKey> : IamProviderBase<TUser, TRole, TKey>, IIamProvider where TUser : IdentityUser<TKey> where TRole : IdentityRole<TKey> where TKey : IEquatable<TKey>
     {
-        private readonly IdentityIamDbContext<TUser, TRole, TKey> _context;
-        private readonly RoleManager<TRole> _roleManager;
+        protected new readonly IdentityIamDbContext<TUser, TRole, TKey> _context;
+        protected readonly RoleManager<TRole> _roleManager;
 
-        public IamProvider(IdentityIamDbContext<TUser, TRole, TKey> context, RoleManager<TRole> roleManager)
+        public IamProvider(IdentityIamDbContext<TUser, TRole, TKey> context, RoleManager<TRole> roleManager) : base(context)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
             _roleManager = roleManager ?? throw new ArgumentNullException(nameof(roleManager));
@@ -28,7 +28,7 @@ namespace IdentityFramework.Iam.Ef
 
                 if (!(await _context.IamPolicyClaims.AnyAsync(x => x.PolicyId.Equals(policyId) && x.Claim == claimValue)))
                 {
-                    var policyClaim = new Model.PolicyClaims<TKey>()
+                    var policyClaim = new Model.PolicyClaim<TKey>()
                     {
                         PolicyId = policyId,
                         Claim = claimValue
@@ -57,7 +57,7 @@ namespace IdentityFramework.Iam.Ef
                 {
                     if (!(await _context.IamPolicyRoles.AnyAsync(x => x.PolicyId.Equals(policyId) && x.RoleId.Equals(role.Id))))
                     {
-                        var policyRole = new Model.PolicyRoles<TKey>()
+                        var policyRole = new Model.PolicyRole<TKey>()
                         {
                             PolicyId = policyId,
                             RoleId = role.Id
@@ -129,49 +129,55 @@ namespace IdentityFramework.Iam.Ef
             return Task.FromResult(ret);
         }
 
-        Task IIamProvider.RemoveClaim(string policyName, IIamProviderCache cache)
+        async Task IIamProvider.RemoveClaim(string policyName, IIamProviderCache cache)
         {
-            throw new System.NotImplementedException();
-        }
+            var policyId = await CreateOrGetPolicy(policyName);
 
-        Task IIamProvider.RemoveRole(string policyName, string roleName, IIamProviderCache cache)
-        {
-            throw new System.NotImplementedException();
-        }
+            var claim = await _context.IamPolicyClaims.FirstOrDefaultAsync(x => x.PolicyId.Equals(policyId));
 
-        Task IIamProvider.RemoveRoles(string policyName, IIamProviderCache cache)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        private async Task<TKey> CreateOrGetPolicy(string policyName)
-        {
-            TKey ret;
-
-            var policy = await _context.IamPolicies
-                .AsNoTracking()
-                .FirstOrDefaultAsync(x => x.NormalizedName == policyName.ToUpper());
-
-            if (policy != null)
+            if (claim != null)
             {
-                ret = policy.Id;
-            }
-            else
-            {
-                policy = new Model.Policy<TKey>()
-                {
-                    Name = policyName,
-                    NormalizedName = policyName.ToUpper()
-                };
-
-                _context.IamPolicies.Add(policy);
+                _context.IamPolicyClaims.Remove(claim);
 
                 await _context.SaveChangesAsync();
-
-                ret = policy.Id;
             }
 
-            return ret;
+            cache.RemoveClaim(policyName);
+        }
+
+        async Task IIamProvider.RemoveRole(string policyName, string roleName, IIamProviderCache cache)
+        {
+            var policyId = await CreateOrGetPolicy(policyName);
+            var role = await _roleManager.FindByNameAsync(roleName);
+
+            if (role != null)
+            {
+                var iamRole = await _context.IamPolicyRoles.FirstOrDefaultAsync(x => x.PolicyId.Equals(policyId) && x.RoleId.Equals(role.Id));
+
+                if (iamRole != null)
+                {
+                    _context.IamPolicyRoles.Remove(iamRole);
+
+                    await _context.SaveChangesAsync();
+                }
+
+                cache.RemoveRole(policyName, roleName);
+            }
+        }
+
+        async Task IIamProvider.RemoveRoles(string policyName, IIamProviderCache cache)
+        {
+            var policyId = await CreateOrGetPolicy(policyName);
+
+            var iamRoles = await _context.IamPolicyRoles
+                .Where(x => x.PolicyId.Equals(policyId))
+                    .ToListAsync();
+
+            _context.IamPolicyRoles.RemoveRange(iamRoles);
+
+            await _context.SaveChangesAsync();
+
+            cache.RemoveRoles(policyName);
         }
     }
 }

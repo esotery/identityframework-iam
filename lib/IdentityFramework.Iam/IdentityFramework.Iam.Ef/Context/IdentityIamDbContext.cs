@@ -7,14 +7,14 @@ namespace IdentityFramework.Iam.Ef.Context
 {
     public class IdentityIamDbContext<TUser, TRole, TKey> : IdentityIamDbContextBase<TUser, TRole, TKey> where TUser : IdentityUser<TKey> where TRole : IdentityRole<TKey> where TKey : IEquatable<TKey>
     {
-        public DbSet<PolicyClaims<TKey>> IamPolicyClaims { get; set; }
-        public DbSet<PolicyRoles<TKey>> IamPolicyRoles { get; set; }
+        public DbSet<PolicyClaim<TKey>> IamPolicyClaims { get; set; }
+        public DbSet<PolicyRole<TKey>> IamPolicyRoles { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
 
-            builder.Entity<PolicyClaims<TKey>>(action =>
+            builder.Entity<PolicyClaim<TKey>>(action =>
             {
                 action.HasKey(p => p.Id);
                 action.HasAlternateKey(p => p.PolicyId);
@@ -25,13 +25,17 @@ namespace IdentityFramework.Iam.Ef.Context
                     .OnDelete(DeleteBehavior.Cascade);
             });
 
-            builder.Entity<PolicyRoles<TKey>>(action =>
+            builder.Entity<PolicyRole<TKey>>(action =>
             {
                 action.HasKey(p => p.Id);
                 action.HasIndex(p => new { p.PolicyId, p.RoleId }).HasName("PolicyIndex").IsUnique(true);
                 action.HasOne<Policy<TKey>>()
                     .WithMany()
                     .HasForeignKey(p => p.PolicyId)
+                    .OnDelete(DeleteBehavior.Cascade);
+                action.HasOne<TRole>()
+                    .WithMany()
+                    .HasForeignKey(p => p.RoleId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
         }
