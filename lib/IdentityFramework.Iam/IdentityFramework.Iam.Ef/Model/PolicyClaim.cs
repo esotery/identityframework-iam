@@ -4,9 +4,9 @@ namespace IdentityFramework.Iam.Ef.Model
 {
     public class PolicyClaim<TKey> where TKey : IEquatable<TKey>
     {
-        public TKey Id { get; set; }
+        public virtual TKey Id { get; set; }
 
-        public TKey PolicyId { get; set; }
-        public string Claim { get; set; }
+        public virtual TKey PolicyId { get; set; }
+        public virtual string Claim { get; set; }
     }
 }

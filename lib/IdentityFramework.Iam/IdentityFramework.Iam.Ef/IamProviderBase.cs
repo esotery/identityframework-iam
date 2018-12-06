@@ -8,9 +8,9 @@ namespace IdentityFramework.Iam.Ef
 {
     public class IamProviderBase<TUser, TRole, TKey> where TUser : IdentityUser<TKey> where TRole : IdentityRole<TKey> where TKey : IEquatable<TKey>
     {
-        protected readonly IdentityIamDbContextBase<TUser, TRole, TKey> _context;
+        protected readonly IamDbContextBase<TUser, TRole, TKey> _context;
 
-        public IamProviderBase(IdentityIamDbContextBase<TUser, TRole, TKey> context)
+        public IamProviderBase(IamDbContextBase<TUser, TRole, TKey> context)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
         }

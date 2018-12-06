@@ -11,10 +11,10 @@ namespace IdentityFramework.Iam.Ef
 {
     public class MultiTenantIamProvider<TUser, TRole, TKey, TTenantKey> : IamProviderBase<TUser, TRole, TKey>, IMultiTenantIamProvider<TTenantKey> where TUser : IdentityUser<TKey> where TRole : IdentityRole<TKey> where TKey : IEquatable<TKey> where TTenantKey : IEquatable<TTenantKey>
     {
-        protected new readonly MultiTenantIdentityIamDbContext<TUser, TRole, TKey, TTenantKey> _context;
+        protected new readonly MultiTenantIamDbContext<TUser, TRole, TKey, TTenantKey> _context;
         protected readonly RoleManager<TRole> _roleManager;
 
-        public MultiTenantIamProvider(MultiTenantIdentityIamDbContext<TUser, TRole, TKey, TTenantKey> context, RoleManager<TRole> roleManager) : base(context)
+        public MultiTenantIamProvider(MultiTenantIamDbContext<TUser, TRole, TKey, TTenantKey> context, RoleManager<TRole> roleManager) : base(context)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
             _roleManager = roleManager ?? throw new ArgumentNullException(nameof(roleManager));

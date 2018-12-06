@@ -11,10 +11,10 @@ namespace IdentityFramework.Iam.Ef
 {
     public class IamProvider<TUser, TRole, TKey> : IamProviderBase<TUser, TRole, TKey>, IIamProvider where TUser : IdentityUser<TKey> where TRole : IdentityRole<TKey> where TKey : IEquatable<TKey>
     {
-        protected new readonly IdentityIamDbContext<TUser, TRole, TKey> _context;
+        protected new readonly IamDbContext<TUser, TRole, TKey> _context;
         protected readonly RoleManager<TRole> _roleManager;
 
-        public IamProvider(IdentityIamDbContext<TUser, TRole, TKey> context, RoleManager<TRole> roleManager) : base(context)
+        public IamProvider(IamDbContext<TUser, TRole, TKey> context, RoleManager<TRole> roleManager) : base(context)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
             _roleManager = roleManager ?? throw new ArgumentNullException(nameof(roleManager));

@@ -5,7 +5,11 @@ using System;
 
 namespace IdentityFramework.Iam.Ef.Context
 {
-    public class MultiTenantIdentityIamDbContext<TUser, TRole, TKey, TTenantKey> : IdentityIamDbContextBase<TUser, TRole, TKey> where TUser : IdentityUser<TKey> where TRole : IdentityRole<TKey> where TKey : IEquatable<TKey> where TTenantKey : IEquatable<TTenantKey>
+    public class MultiTenantIamDbContext<TUser, TRole, TKey, TTenantKey> : IamDbContextBase<TUser, TRole, TKey, MultiTenantIdentityUserClaim<TKey, TTenantKey>, MultiTenantIdentityUserRole<TKey, TTenantKey>>
+        where TUser : IdentityUser<TKey> 
+        where TRole : IdentityRole<TKey> 
+        where TKey : IEquatable<TKey> 
+        where TTenantKey : IEquatable<TTenantKey>
     {
         public DbSet<MultiTenantPolicyClaim<TKey, TTenantKey>> IamPolicyClaims { get; set; }
         public DbSet<MultiTenantPolicyRole<TKey, TTenantKey>> IamPolicyRoles { get; set; }
@@ -37,6 +41,11 @@ namespace IdentityFramework.Iam.Ef.Context
                     .WithMany()
                     .HasForeignKey(p => p.RoleId)
                     .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            builder.Entity<MultiTenantIdentityUserRole<TKey, TTenantKey>>(action =>
+            {
+                action.HasAlternateKey(r => new { r.UserId, r.RoleId, r.TenantId });
             });
         }
     }

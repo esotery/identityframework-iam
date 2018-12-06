@@ -5,7 +5,7 @@ using System;
 
 namespace IdentityFramework.Iam.Ef.Context
 {
-    public class IdentityIamDbContext<TUser, TRole, TKey> : IdentityIamDbContextBase<TUser, TRole, TKey> where TUser : IdentityUser<TKey> where TRole : IdentityRole<TKey> where TKey : IEquatable<TKey>
+    public class IamDbContext<TUser, TRole, TKey> : IamDbContextBase<TUser, TRole, TKey> where TUser : IdentityUser<TKey> where TRole : IdentityRole<TKey> where TKey : IEquatable<TKey>
     {
         public DbSet<PolicyClaim<TKey>> IamPolicyClaims { get; set; }
         public DbSet<PolicyRole<TKey>> IamPolicyRoles { get; set; }
