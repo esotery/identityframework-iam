@@ -1,5 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Generic;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -82,836 +83,132 @@ namespace IdentityFramework.Iam.Test
             response.EnsureSuccessStatusCode();
         }
 
-        [TestMethod]
-        public async Task GetListAsAdminFirstTenant()
+        [DataTestMethod]
+        [DataRow("admin.iam@iam.iam", "xyzIam345$", 1, HttpStatusCode.OK)]
+        [DataRow("admin.iam@iam.iam", "xyzIam345$", 2, HttpStatusCode.OK)]
+        [DataRow("manager.iam@iam.iam", "xyzIam345$", 1, HttpStatusCode.OK)]
+        [DataRow("manager.iam@iam.iam", "xyzIam345$", 2, HttpStatusCode.OK)]
+        [DataRow("viewer.iam@iam.iam", "xyzIam345$", 1, HttpStatusCode.OK)]
+        [DataRow("viewer.iam@iam.iam", "xyzIam345$", 2, HttpStatusCode.OK)]
+        [DataRow("user.iam@iam.iam", "xyzIam345$", 1, HttpStatusCode.OK)]
+        [DataRow("user.iam@iam.iam", "xyzIam345$", 2, HttpStatusCode.Forbidden)]
+        [DataRow("user2.iam@iam.iam", "xyzIam345$", 1, HttpStatusCode.Forbidden)]
+        [DataRow("user2.iam@iam.iam", "xyzIam345$", 2, HttpStatusCode.OK)]
+        public async Task GetListTest(string user, string psw, long tenantId, HttpStatusCode result)
         {
             var client = server.CreateClient();
 
-            var token = await LoginUser(client, "admin.iam@iam.iam", "xyzIam345$");
+            var token = await LoginUser(client, user, psw);
 
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            client.DefaultRequestHeaders.Add("X-TenantId", "1");
+            client.DefaultRequestHeaders.Add("X-TenantId", tenantId.ToString());
 
             var response = await client.GetAsync("api/values");
 
-            response.EnsureSuccessStatusCode();
+            Assert.AreEqual(result, response.StatusCode);
         }
 
-        [TestMethod]
-        public async Task GetListAsAdminSecondTenant()
+        [DataTestMethod]
+        [DataRow("admin.iam@iam.iam", "xyzIam345$", 1, HttpStatusCode.OK)]
+        [DataRow("admin.iam@iam.iam", "xyzIam345$", 2, HttpStatusCode.OK)]
+        [DataRow("manager.iam@iam.iam", "xyzIam345$", 1, HttpStatusCode.OK)]
+        [DataRow("manager.iam@iam.iam", "xyzIam345$", 2, HttpStatusCode.Forbidden)]
+        [DataRow("viewer.iam@iam.iam", "xyzIam345$", 1, HttpStatusCode.OK)]
+        [DataRow("viewer.iam@iam.iam", "xyzIam345$", 2, HttpStatusCode.Forbidden)]
+        [DataRow("user.iam@iam.iam", "xyzIam345$", 1, HttpStatusCode.OK)]
+        [DataRow("user.iam@iam.iam", "xyzIam345$", 2, HttpStatusCode.Forbidden)]
+        [DataRow("user2.iam@iam.iam", "xyzIam345$", 1, HttpStatusCode.Forbidden)]
+        [DataRow("user2.iam@iam.iam", "xyzIam345$", 2, HttpStatusCode.OK)]
+        public async Task GetTest(string user, string psw, long tenantId, HttpStatusCode result)
         {
             var client = server.CreateClient();
 
-            var token = await LoginUser(client, "admin.iam@iam.iam", "xyzIam345$");
+            var token = await LoginUser(client, user, psw);
 
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            client.DefaultRequestHeaders.Add("X-TenantId", "2");
-
-            var response = await client.GetAsync("api/values");
-
-            response.EnsureSuccessStatusCode();
-        }
-
-        [TestMethod]
-        public async Task GetAsAdminFirstTenant()
-        {
-            var client = server.CreateClient();
-
-            var token = await LoginUser(client, "admin.iam@iam.iam", "xyzIam345$");
-
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            client.DefaultRequestHeaders.Add("X-TenantId", "1");
+            client.DefaultRequestHeaders.Add("X-TenantId", tenantId.ToString());
 
             var response = await client.GetAsync("api/values/1");
 
-            response.EnsureSuccessStatusCode();
+            Assert.AreEqual(result, response.StatusCode);
         }
 
-        [TestMethod]
-        public async Task GetAsAdminSecondTenant()
+        [DataTestMethod]
+        [DataRow("admin.iam@iam.iam", "xyzIam345$", 1, HttpStatusCode.OK)]
+        [DataRow("admin.iam@iam.iam", "xyzIam345$", 2, HttpStatusCode.OK)]
+        [DataRow("manager.iam@iam.iam", "xyzIam345$", 1, HttpStatusCode.OK)]
+        [DataRow("manager.iam@iam.iam", "xyzIam345$", 2, HttpStatusCode.Forbidden)]
+        [DataRow("viewer.iam@iam.iam", "xyzIam345$", 1, HttpStatusCode.Forbidden)]
+        [DataRow("viewer.iam@iam.iam", "xyzIam345$", 2, HttpStatusCode.Forbidden)]
+        [DataRow("user.iam@iam.iam", "xyzIam345$", 1, HttpStatusCode.Forbidden)]
+        [DataRow("user.iam@iam.iam", "xyzIam345$", 2, HttpStatusCode.Forbidden)]
+        [DataRow("user2.iam@iam.iam", "xyzIam345$", 1, HttpStatusCode.Forbidden)]
+        [DataRow("user2.iam@iam.iam", "xyzIam345$", 2, HttpStatusCode.Forbidden)]
+        public async Task PostTest(string user, string psw, long tenantId, HttpStatusCode result)
         {
             var client = server.CreateClient();
 
-            var token = await LoginUser(client, "admin.iam@iam.iam", "xyzIam345$");
+            var token = await LoginUser(client, user, psw);
 
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            client.DefaultRequestHeaders.Add("X-TenantId", "2");
-
-            var response = await client.GetAsync("api/values/1");
-
-            response.EnsureSuccessStatusCode();
-        }
-
-        [TestMethod]
-        public async Task DeleteAsAdminFirstTenant()
-        {
-            var client = server.CreateClient();
-
-            var token = await LoginUser(client, "admin.iam@iam.iam", "xyzIam345$");
-
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            client.DefaultRequestHeaders.Add("X-TenantId", "1");
-
-            var response = await client.DeleteAsync("api/values/1");
-
-            response.EnsureSuccessStatusCode();
-        }
-
-        [TestMethod]
-        public async Task DeleteAsAdminSecondTenant()
-        {
-            var client = server.CreateClient();
-
-            var token = await LoginUser(client, "admin.iam@iam.iam", "xyzIam345$");
-
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            client.DefaultRequestHeaders.Add("X-TenantId", "2");
-
-            var response = await client.DeleteAsync("api/values/1");
-
-            response.EnsureSuccessStatusCode();
-        }
-
-        [TestMethod]
-        public async Task PostAsAdminFirstTenant()
-        {
-            var client = server.CreateClient();
-
-            var token = await LoginUser(client, "admin.iam@iam.iam", "xyzIam345$");
-
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            client.DefaultRequestHeaders.Add("X-TenantId", "1");
+            client.DefaultRequestHeaders.Add("X-TenantId", tenantId.ToString());
 
             var response = await client.PostAsync("api/values", new FormUrlEncodedContent(new[]
             {
                 new KeyValuePair<string, string>("value", "test")
             }));
 
-            response.EnsureSuccessStatusCode();
+            Assert.AreEqual(result, response.StatusCode);
         }
 
-        [TestMethod]
-        public async Task PostAsAdminSecondTenant()
+        [DataTestMethod]
+        [DataRow("admin.iam@iam.iam", "xyzIam345$", 1, HttpStatusCode.OK)]
+        [DataRow("admin.iam@iam.iam", "xyzIam345$", 2, HttpStatusCode.OK)]
+        [DataRow("manager.iam@iam.iam", "xyzIam345$", 1, HttpStatusCode.OK)]
+        [DataRow("manager.iam@iam.iam", "xyzIam345$", 2, HttpStatusCode.Forbidden)]
+        [DataRow("viewer.iam@iam.iam", "xyzIam345$", 1, HttpStatusCode.Forbidden)]
+        [DataRow("viewer.iam@iam.iam", "xyzIam345$", 2, HttpStatusCode.Forbidden)]
+        [DataRow("user.iam@iam.iam", "xyzIam345$", 1, HttpStatusCode.Forbidden)]
+        [DataRow("user.iam@iam.iam", "xyzIam345$", 2, HttpStatusCode.Forbidden)]
+        [DataRow("user2.iam@iam.iam", "xyzIam345$", 1, HttpStatusCode.Forbidden)]
+        [DataRow("user2.iam@iam.iam", "xyzIam345$", 2, HttpStatusCode.Forbidden)]
+        public async Task PutTest(string user, string psw, long tenantId, HttpStatusCode result)
         {
             var client = server.CreateClient();
 
-            var token = await LoginUser(client, "admin.iam@iam.iam", "xyzIam345$");
+            var token = await LoginUser(client, user, psw);
 
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            client.DefaultRequestHeaders.Add("X-TenantId", "2");
-
-            var response = await client.PostAsync("api/values", new FormUrlEncodedContent(new[]
-            {
-                new KeyValuePair<string, string>("value", "test")
-            }));
-
-            response.EnsureSuccessStatusCode();
-        }
-
-        [TestMethod]
-        public async Task PutAsAdminFirstTenant()
-        {
-            var client = server.CreateClient();
-
-            var token = await LoginUser(client, "admin.iam@iam.iam", "xyzIam345$");
-
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            client.DefaultRequestHeaders.Add("X-TenantId", "1");
+            client.DefaultRequestHeaders.Add("X-TenantId", tenantId.ToString());
 
             var response = await client.PutAsync("api/values/1", new StringContent("test", Encoding.UTF8, "text/plain"));
 
-            response.EnsureSuccessStatusCode();
+            Assert.AreEqual(result, response.StatusCode);
         }
 
-        [TestMethod]
-        public async Task PutAsAdminSecondTenant()
+        [DataTestMethod]
+        [DataRow("admin.iam@iam.iam", "xyzIam345$", 1, HttpStatusCode.OK)]
+        [DataRow("admin.iam@iam.iam", "xyzIam345$", 2, HttpStatusCode.OK)]
+        [DataRow("manager.iam@iam.iam", "xyzIam345$", 1, HttpStatusCode.Forbidden)]
+        [DataRow("manager.iam@iam.iam", "xyzIam345$", 2, HttpStatusCode.Forbidden)]
+        [DataRow("viewer.iam@iam.iam", "xyzIam345$", 1, HttpStatusCode.Forbidden)]
+        [DataRow("viewer.iam@iam.iam", "xyzIam345$", 2, HttpStatusCode.Forbidden)]
+        [DataRow("user.iam@iam.iam", "xyzIam345$", 1, HttpStatusCode.Forbidden)]
+        [DataRow("user.iam@iam.iam", "xyzIam345$", 2, HttpStatusCode.Forbidden)]
+        [DataRow("user2.iam@iam.iam", "xyzIam345$", 1, HttpStatusCode.Forbidden)]
+        [DataRow("user2.iam@iam.iam", "xyzIam345$", 2, HttpStatusCode.Forbidden)]
+        public async Task DeleteTest(string user, string psw, long tenantId, HttpStatusCode result)
         {
             var client = server.CreateClient();
 
-            var token = await LoginUser(client, "admin.iam@iam.iam", "xyzIam345$");
+            var token = await LoginUser(client, user, psw);
 
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            client.DefaultRequestHeaders.Add("X-TenantId", "2");
-
-            var response = await client.PutAsync("api/values/1", new StringContent("test", Encoding.UTF8, "text/plain"));
-
-            response.EnsureSuccessStatusCode();
-        }
-
-        [TestMethod]
-        public async Task GetListAsManagerFirstTenant()
-        {
-            var client = server.CreateClient();
-
-            var token = await LoginUser(client, "manager.iam@iam.iam", "xyzIam345$");
-
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            client.DefaultRequestHeaders.Add("X-TenantId", "1");
-
-            var response = await client.GetAsync("api/values");
-
-            response.EnsureSuccessStatusCode();
-        }
-
-        [TestMethod]
-        public async Task GetListAsManagerSecondTenant()
-        {
-            var client = server.CreateClient();
-
-            var token = await LoginUser(client, "manager.iam@iam.iam", "xyzIam345$");
-
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            client.DefaultRequestHeaders.Add("X-TenantId", "2");
-
-            var response = await client.GetAsync("api/values");
-
-            response.EnsureSuccessStatusCode();
-        }
-
-        [TestMethod]
-        public async Task GetAsManagerFirstTenant()
-        {
-            var client = server.CreateClient();
-
-            var token = await LoginUser(client, "manager.iam@iam.iam", "xyzIam345$");
-
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            client.DefaultRequestHeaders.Add("X-TenantId", "1");
-
-            var response = await client.GetAsync("api/values/1");
-
-            response.EnsureSuccessStatusCode();
-        }
-
-        [TestMethod]
-        [ExpectedException(typeof(HttpRequestException))]
-        public async Task GetAsManagerSecondTenant()
-        {
-            var client = server.CreateClient();
-
-            var token = await LoginUser(client, "manager.iam@iam.iam", "xyzIam345$");
-
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            client.DefaultRequestHeaders.Add("X-TenantId", "2");
-
-            var response = await client.GetAsync("api/values/1");
-
-            response.EnsureSuccessStatusCode();
-        }
-
-        [TestMethod]
-        [ExpectedException(typeof(HttpRequestException))]
-        public async Task DeleteAsManagerFirstTenant()
-        {
-            var client = server.CreateClient();
-
-            var token = await LoginUser(client, "manager.iam@iam.iam", "xyzIam345$");
-
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            client.DefaultRequestHeaders.Add("X-TenantId", "1");
+            client.DefaultRequestHeaders.Add("X-TenantId", tenantId.ToString());
 
             var response = await client.DeleteAsync("api/values/1");
 
-            response.EnsureSuccessStatusCode();
-        }
-
-        [TestMethod]
-        [ExpectedException(typeof(HttpRequestException))]
-        public async Task DeleteAsManagerSecondTenant()
-        {
-            var client = server.CreateClient();
-
-            var token = await LoginUser(client, "manager.iam@iam.iam", "xyzIam345$");
-
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            client.DefaultRequestHeaders.Add("X-TenantId", "2");
-
-            var response = await client.DeleteAsync("api/values/1");
-
-            response.EnsureSuccessStatusCode();
-        }
-
-        [TestMethod]
-        public async Task PostAsManagerFirstTenant()
-        {
-            var client = server.CreateClient();
-
-            var token = await LoginUser(client, "manager.iam@iam.iam", "xyzIam345$");
-
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            client.DefaultRequestHeaders.Add("X-TenantId", "1");
-
-            var response = await client.PostAsync("api/values", new FormUrlEncodedContent(new[]
-            {
-                new KeyValuePair<string, string>("value", "test")
-            }));
-
-            response.EnsureSuccessStatusCode();
-        }
-
-        [TestMethod]
-        [ExpectedException(typeof(HttpRequestException))]
-        public async Task PostAsManagerSecondTenant()
-        {
-            var client = server.CreateClient();
-
-            var token = await LoginUser(client, "manager.iam@iam.iam", "xyzIam345$");
-
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            client.DefaultRequestHeaders.Add("X-TenantId", "2");
-
-            var response = await client.PostAsync("api/values", new FormUrlEncodedContent(new[]
-            {
-                new KeyValuePair<string, string>("value", "test")
-            }));
-
-            response.EnsureSuccessStatusCode();
-        }
-
-        [TestMethod]
-        public async Task PutAsManagerFirstTenant()
-        {
-            var client = server.CreateClient();
-
-            var token = await LoginUser(client, "manager.iam@iam.iam", "xyzIam345$");
-
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            client.DefaultRequestHeaders.Add("X-TenantId", "1");
-
-            var response = await client.PutAsync("api/values/1", new FormUrlEncodedContent(new[]
-            {
-                new KeyValuePair<string, string>("value", "test")
-            }));
-
-            response.EnsureSuccessStatusCode();
-        }
-
-        [TestMethod]
-        [ExpectedException(typeof(HttpRequestException))]
-        public async Task PutAsManagerSecondTenant()
-        {
-            var client = server.CreateClient();
-
-            var token = await LoginUser(client, "manager.iam@iam.iam", "xyzIam345$");
-
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            client.DefaultRequestHeaders.Add("X-TenantId", "2");
-
-            var response = await client.PutAsync("api/values/1", new FormUrlEncodedContent(new[]
-            {
-                new KeyValuePair<string, string>("value", "test")
-            }));
-
-            response.EnsureSuccessStatusCode();
-        }
-
-        [TestMethod]
-        public async Task GetListAsUser1FirstTenant()
-        {
-            var client = server.CreateClient();
-
-            var token = await LoginUser(client, "user.iam@iam.iam", "xyzIam345$");
-
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            client.DefaultRequestHeaders.Add("X-TenantId", "1");
-
-            var response = await client.GetAsync("api/values");
-
-            response.EnsureSuccessStatusCode();
-        }
-
-        [TestMethod]
-        [ExpectedException(typeof(HttpRequestException))]
-        public async Task GetListAsUser1SecondTenant()
-        {
-            var client = server.CreateClient();
-
-            var token = await LoginUser(client, "user.iam@iam.iam", "xyzIam345$");
-
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            client.DefaultRequestHeaders.Add("X-TenantId", "2");
-
-            var response = await client.GetAsync("api/values");
-
-            response.EnsureSuccessStatusCode();
-        }
-
-        [TestMethod]
-        [ExpectedException(typeof(HttpRequestException))]
-        public async Task GetListAsUser2FirstTenant()
-        {
-            var client = server.CreateClient();
-
-            var token = await LoginUser(client, "user2.iam@iam.iam", "xyzIam345$");
-
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            client.DefaultRequestHeaders.Add("X-TenantId", "1");
-
-            var response = await client.GetAsync("api/values");
-
-            response.EnsureSuccessStatusCode();
-        }
-
-        [TestMethod]
-        public async Task GetListAsUser2SecondTenant()
-        {
-            var client = server.CreateClient();
-
-            var token = await LoginUser(client, "user2.iam@iam.iam", "xyzIam345$");
-
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            client.DefaultRequestHeaders.Add("X-TenantId", "2");
-
-            var response = await client.GetAsync("api/values");
-
-            response.EnsureSuccessStatusCode();
-        }
-
-        [TestMethod]
-        public async Task GetAsUser1FirstTenant()
-        {
-            var client = server.CreateClient();
-
-            var token = await LoginUser(client, "user.iam@iam.iam", "xyzIam345$");
-
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            client.DefaultRequestHeaders.Add("X-TenantId", "1");
-
-            var response = await client.GetAsync("api/values/1");
-
-            response.EnsureSuccessStatusCode();
-        }
-
-        [TestMethod]
-        [ExpectedException(typeof(HttpRequestException))]
-        public async Task GetAsUser1SecondTenant()
-        {
-            var client = server.CreateClient();
-
-            var token = await LoginUser(client, "user.iam@iam.iam", "xyzIam345$");
-
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            client.DefaultRequestHeaders.Add("X-TenantId", "2");
-
-            var response = await client.GetAsync("api/values/1");
-
-            response.EnsureSuccessStatusCode();
-        }
-
-        [TestMethod]
-        [ExpectedException(typeof(HttpRequestException))]
-        public async Task GetAsUser2FirstTenant()
-        {
-            var client = server.CreateClient();
-
-            var token = await LoginUser(client, "user2.iam@iam.iam", "xyzIam345$");
-
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            client.DefaultRequestHeaders.Add("X-TenantId", "1");
-
-            var response = await client.GetAsync("api/values/1");
-
-            response.EnsureSuccessStatusCode();
-        }
-
-        [TestMethod]
-        public async Task GetAsUser2SecondTenant()
-        {
-            var client = server.CreateClient();
-
-            var token = await LoginUser(client, "user2.iam@iam.iam", "xyzIam345$");
-
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            client.DefaultRequestHeaders.Add("X-TenantId", "2");
-
-            var response = await client.GetAsync("api/values/1");
-
-            response.EnsureSuccessStatusCode();
-        }
-
-        [TestMethod]
-        [ExpectedException(typeof(HttpRequestException))]
-        public async Task DeleteAsUser1FirstTenant()
-        {
-            var client = server.CreateClient();
-
-            var token = await LoginUser(client, "user.iam@iam.iam", "xyzIam345$");
-
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            client.DefaultRequestHeaders.Add("X-TenantId", "1");
-
-            var response = await client.DeleteAsync("api/values/1");
-
-            response.EnsureSuccessStatusCode();
-        }
-
-        [TestMethod]
-        [ExpectedException(typeof(HttpRequestException))]
-        public async Task DeleteAsUser1SecondTenant()
-        {
-            var client = server.CreateClient();
-
-            var token = await LoginUser(client, "user.iam@iam.iam", "xyzIam345$");
-
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            client.DefaultRequestHeaders.Add("X-TenantId", "2");
-
-            var response = await client.DeleteAsync("api/values/1");
-
-            response.EnsureSuccessStatusCode();
-        }
-
-        [TestMethod]
-        [ExpectedException(typeof(HttpRequestException))]
-        public async Task DeleteAsUser2FirstTenant()
-        {
-            var client = server.CreateClient();
-
-            var token = await LoginUser(client, "user2.iam@iam.iam", "xyzIam345$");
-
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            client.DefaultRequestHeaders.Add("X-TenantId", "1");
-
-            var response = await client.DeleteAsync("api/values/1");
-
-            response.EnsureSuccessStatusCode();
-        }
-
-        [TestMethod]
-        [ExpectedException(typeof(HttpRequestException))]
-        public async Task DeleteAsUser2SecondTenant()
-        {
-            var client = server.CreateClient();
-
-            var token = await LoginUser(client, "user2.iam@iam.iam", "xyzIam345$");
-
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            client.DefaultRequestHeaders.Add("X-TenantId", "2");
-
-            var response = await client.DeleteAsync("api/values/1");
-
-            response.EnsureSuccessStatusCode();
-        }
-
-        [TestMethod]
-        [ExpectedException(typeof(HttpRequestException))]
-        public async Task PostAsUser1FirstTenant()
-        {
-            var client = server.CreateClient();
-
-            var token = await LoginUser(client, "user.iam@iam.iam", "xyzIam345$");
-
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            client.DefaultRequestHeaders.Add("X-TenantId", "1");
-
-            var response = await client.PostAsync("api/values", new FormUrlEncodedContent(new[]
-            {
-                new KeyValuePair<string, string>("value", "test")
-            }));
-
-            response.EnsureSuccessStatusCode();
-        }
-
-        [TestMethod]
-        [ExpectedException(typeof(HttpRequestException))]
-        public async Task PostAsUser1SecondTenant()
-        {
-            var client = server.CreateClient();
-
-            var token = await LoginUser(client, "user.iam@iam.iam", "xyzIam345$");
-
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            client.DefaultRequestHeaders.Add("X-TenantId", "2");
-
-            var response = await client.PostAsync("api/values", new FormUrlEncodedContent(new[]
-            {
-                new KeyValuePair<string, string>("value", "test")
-            }));
-
-            response.EnsureSuccessStatusCode();
-        }
-
-        [TestMethod]
-        [ExpectedException(typeof(HttpRequestException))]
-        public async Task PostAsUser2FirstTenant()
-        {
-            var client = server.CreateClient();
-
-            var token = await LoginUser(client, "user2.iam@iam.iam", "xyzIam345$");
-
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            client.DefaultRequestHeaders.Add("X-TenantId", "1");
-
-            var response = await client.PostAsync("api/values", new FormUrlEncodedContent(new[]
-            {
-                new KeyValuePair<string, string>("value", "test")
-            }));
-
-            response.EnsureSuccessStatusCode();
-        }
-
-        [TestMethod]
-        [ExpectedException(typeof(HttpRequestException))]
-        public async Task PostAsUser2SecondTenant()
-        {
-            var client = server.CreateClient();
-
-            var token = await LoginUser(client, "user2.iam@iam.iam", "xyzIam345$");
-
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            client.DefaultRequestHeaders.Add("X-TenantId", "2");
-
-            var response = await client.PostAsync("api/values", new FormUrlEncodedContent(new[]
-            {
-                new KeyValuePair<string, string>("value", "test")
-            }));
-
-            response.EnsureSuccessStatusCode();
-        }
-
-        [TestMethod]
-        [ExpectedException(typeof(HttpRequestException))]
-        public async Task PutAsUser1FirstTenant()
-        {
-            var client = server.CreateClient();
-
-            var token = await LoginUser(client, "user.iam@iam.iam", "xyzIam345$");
-            client.DefaultRequestHeaders.Add("X-TenantId", "1");
-
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-            var response = await client.PutAsync("api/values/1", new FormUrlEncodedContent(new[]
-            {
-                new KeyValuePair<string, string>("value", "test")
-            }));
-
-            response.EnsureSuccessStatusCode();
-        }
-
-        [TestMethod]
-        [ExpectedException(typeof(HttpRequestException))]
-        public async Task PutAsUser1SecondTenant()
-        {
-            var client = server.CreateClient();
-
-            var token = await LoginUser(client, "user.iam@iam.iam", "xyzIam345$");
-            client.DefaultRequestHeaders.Add("X-TenantId", "2");
-
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-            var response = await client.PutAsync("api/values/1", new FormUrlEncodedContent(new[]
-            {
-                new KeyValuePair<string, string>("value", "test")
-            }));
-
-            response.EnsureSuccessStatusCode();
-        }
-
-        [TestMethod]
-        [ExpectedException(typeof(HttpRequestException))]
-        public async Task PutAsUser2FirstTenant()
-        {
-            var client = server.CreateClient();
-
-            var token = await LoginUser(client, "user2.iam@iam.iam", "xyzIam345$");
-            client.DefaultRequestHeaders.Add("X-TenantId", "1");
-
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-            var response = await client.PutAsync("api/values/1", new FormUrlEncodedContent(new[]
-            {
-                new KeyValuePair<string, string>("value", "test")
-            }));
-
-            response.EnsureSuccessStatusCode();
-        }
-
-        [TestMethod]
-        [ExpectedException(typeof(HttpRequestException))]
-        public async Task PutAsUser2SecondTenant()
-        {
-            var client = server.CreateClient();
-
-            var token = await LoginUser(client, "user2.iam@iam.iam", "xyzIam345$");
-            client.DefaultRequestHeaders.Add("X-TenantId", "2");
-
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-            var response = await client.PutAsync("api/values/1", new FormUrlEncodedContent(new[]
-            {
-                new KeyValuePair<string, string>("value", "test")
-            }));
-
-            response.EnsureSuccessStatusCode();
-        }
-
-        [TestMethod]
-        public async Task GetListAsViewerFirstTenant()
-        {
-            var client = server.CreateClient();
-
-            var token = await LoginUser(client, "viewer.iam@iam.iam", "xyzIam345$");
-
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            client.DefaultRequestHeaders.Add("X-TenantId", "1");
-
-            var response = await client.GetAsync("api/values");
-
-            response.EnsureSuccessStatusCode();
-        }
-
-        [TestMethod]
-        public async Task GetListAsViewerSecondTenant()
-        {
-            var client = server.CreateClient();
-
-            var token = await LoginUser(client, "viewer.iam@iam.iam", "xyzIam345$");
-
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            client.DefaultRequestHeaders.Add("X-TenantId", "2");
-
-            var response = await client.GetAsync("api/values");
-
-            response.EnsureSuccessStatusCode();
-        }
-
-        [TestMethod]
-        public async Task GetAsViewerFirstTenant()
-        {
-            var client = server.CreateClient();
-
-            var token = await LoginUser(client, "viewer.iam@iam.iam", "xyzIam345$");
-
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            client.DefaultRequestHeaders.Add("X-TenantId", "1");
-
-            var response = await client.GetAsync("api/values/1");
-
-            response.EnsureSuccessStatusCode();
-        }
-
-        [TestMethod]
-        [ExpectedException(typeof(HttpRequestException))]
-        public async Task GetAsViewerSecondTenant()
-        {
-            var client = server.CreateClient();
-
-            var token = await LoginUser(client, "viewer.iam@iam.iam", "xyzIam345$");
-
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            client.DefaultRequestHeaders.Add("X-TenantId", "2");
-
-            var response = await client.GetAsync("api/values/1");
-
-            response.EnsureSuccessStatusCode();
-        }
-
-        [TestMethod]
-        [ExpectedException(typeof(HttpRequestException))]
-        public async Task DeleteAsViewerFirstTenant()
-        {
-            var client = server.CreateClient();
-
-            var token = await LoginUser(client, "viewer.iam@iam.iam", "xyzIam345$");
-
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            client.DefaultRequestHeaders.Add("X-TenantId", "1");
-
-            var response = await client.DeleteAsync("api/values/1");
-
-            response.EnsureSuccessStatusCode();
-        }
-
-        [TestMethod]
-        [ExpectedException(typeof(HttpRequestException))]
-        public async Task DeleteAsViewerSecondTenant()
-        {
-            var client = server.CreateClient();
-
-            var token = await LoginUser(client, "viewer.iam@iam.iam", "xyzIam345$");
-
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            client.DefaultRequestHeaders.Add("X-TenantId", "2");
-
-            var response = await client.DeleteAsync("api/values/1");
-
-            response.EnsureSuccessStatusCode();
-        }
-
-        [TestMethod]
-        [ExpectedException(typeof(HttpRequestException))]
-        public async Task PostAsViewerFirstTenant()
-        {
-            var client = server.CreateClient();
-
-            var token = await LoginUser(client, "viewer.iam@iam.iam", "xyzIam345$");
-
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            client.DefaultRequestHeaders.Add("X-TenantId", "1");
-
-            var response = await client.PostAsync("api/values", new FormUrlEncodedContent(new[]
-            {
-                new KeyValuePair<string, string>("value", "test")
-            }));
-
-            response.EnsureSuccessStatusCode();
-        }
-
-        [TestMethod]
-        [ExpectedException(typeof(HttpRequestException))]
-        public async Task PostAsViewerSecondTenant()
-        {
-            var client = server.CreateClient();
-
-            var token = await LoginUser(client, "viewer.iam@iam.iam", "xyzIam345$");
-
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            client.DefaultRequestHeaders.Add("X-TenantId", "2");
-
-            var response = await client.PostAsync("api/values", new FormUrlEncodedContent(new[]
-            {
-                new KeyValuePair<string, string>("value", "test")
-            }));
-
-            response.EnsureSuccessStatusCode();
-        }
-
-        [TestMethod]
-        [ExpectedException(typeof(HttpRequestException))]
-        public async Task PutAsViewerFirstTenant()
-        {
-            var client = server.CreateClient();
-
-            var token = await LoginUser(client, "viewer.iam@iam.iam", "xyzIam345$");
-
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            client.DefaultRequestHeaders.Add("X-TenantId", "1");
-
-            var response = await client.PutAsync("api/values/1", new FormUrlEncodedContent(new[]
-            {
-                new KeyValuePair<string, string>("value", "test")
-            }));
-
-            response.EnsureSuccessStatusCode();
-        }
-
-        [TestMethod]
-        [ExpectedException(typeof(HttpRequestException))]
-        public async Task PutAsViewerSecondTenant()
-        {
-            var client = server.CreateClient();
-
-            var token = await LoginUser(client, "viewer.iam@iam.iam", "xyzIam345$");
-
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            client.DefaultRequestHeaders.Add("X-TenantId", "2");
-
-            var response = await client.PutAsync("api/values/1", new FormUrlEncodedContent(new[]
-            {
-                new KeyValuePair<string, string>("value", "test")
-            }));
-
-            response.EnsureSuccessStatusCode();
+            Assert.AreEqual(result, response.StatusCode);
         }
     }
 }
