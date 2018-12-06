@@ -1,45 +1,62 @@
 ﻿using IdentityFramework.Iam.Ef.Context;
+using IdentityFramework.Iam.Ef.Model;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Collections.Concurrent;
 using System.Threading.Tasks;
 
 namespace IdentityFramework.Iam.Ef
 {
-    public class IamProviderBase<TUser, TRole, TKey> where TUser : IdentityUser<TKey> where TRole : IdentityRole<TKey> where TKey : IEquatable<TKey>
+    public class IamProviderBase<TKey>
+        where TKey : IEquatable<TKey>
     {
-        protected readonly IamDbContextBase<TUser, TRole, TKey> _context;
+        private readonly DbContext _context;
 
-        public IamProviderBase(IamDbContextBase<TUser, TRole, TKey> context)
+        private readonly ConcurrentDictionary<string, TKey> _cache;
+
+        public IamProviderBase(DbContext context)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
+            _cache = new ConcurrentDictionary<string, TKey>();
         }
 
         protected virtual async Task<TKey> CreateOrGetPolicy(string policyName)
         {
             TKey ret;
 
-            var policy = await _context.IamPolicies
-                .AsNoTracking()
-                .FirstOrDefaultAsync(x => x.NormalizedName == policyName.ToUpper());
+            _cache.TryGetValue(policyName, out TKey policyId);
 
-            if (policy != null)
+            if (policyId.Equals(default(TKey)))
             {
-                ret = policy.Id;
+                var policy = await _context.Set<Policy<TKey>>()
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(x => x.NormalizedName == policyName.ToUpper());
+
+                if (policy != null)
+                {
+                    ret = policy.Id;
+                }
+                else
+                {
+                    policy = new Model.Policy<TKey>()
+                    {
+                        Name = policyName,
+                        NormalizedName = policyName.ToUpper()
+                    };
+
+                    _context.Set<Policy<TKey>>().Add(policy);
+
+                    await _context.SaveChangesAsync();
+
+                    ret = policy.Id;
+                }
+
+                _cache.AddOrUpdate(policyName, ret, (k, v) => { v = ret; return ret; });
             }
             else
             {
-                policy = new Model.Policy<TKey>()
-                {
-                    Name = policyName,
-                    NormalizedName = policyName.ToUpper()
-                };
-
-                _context.IamPolicies.Add(policy);
-
-                await _context.SaveChangesAsync();
-
-                ret = policy.Id;
+                ret = policyId;
             }
 
             return ret;

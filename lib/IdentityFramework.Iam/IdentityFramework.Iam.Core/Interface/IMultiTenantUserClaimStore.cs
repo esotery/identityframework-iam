@@ -9,8 +9,8 @@ namespace IdentityFramework.Iam.Core.Interface
     /// Provides an abstraction for a store of claims for a user.
     /// </summary>
     /// <typeparam name="TUser">The type encapsulating a user.</typeparam>
-    /// <typeparam name="TKey">The type of the tenantId.</typeparam>
-    public interface IMultiTenantUserClaimStore<TUser, TKey> where TUser : class
+    /// <typeparam name="TTenantKey">The type of the tenantId.</typeparam>
+    public interface IMultiTenantUserClaimStore<TUser, TTenantKey> where TUser : class
     {
         /// <summary>
         /// Gets a list of <see cref="T:System.Security.Claims.Claim" />s to be belonging to the specified <paramref name="user" /> as an asynchronous operation.
@@ -21,7 +21,7 @@ namespace IdentityFramework.Iam.Core.Interface
         /// <returns>
         /// A <see cref="T:System.Threading.Tasks.Task`1" /> that represents the result of the asynchronous query, a list of <see cref="T:System.Security.Claims.Claim" />s.
         /// </returns>
-		Task<IList<Claim>> GetClaimsAsync(TUser user, TKey tenantId, CancellationToken cancellationToken);
+		Task<IList<Claim>> GetClaimsAsync(TUser user, TTenantKey tenantId, CancellationToken cancellationToken);
 
         /// Gets a list of <see cref="T:System.Security.Claims.Claim" />s to be belonging to the specified <paramref name="user" /> as an asynchronous operation.
         /// </summary>
@@ -31,7 +31,7 @@ namespace IdentityFramework.Iam.Core.Interface
         /// <returns>
         /// A <see cref="T:System.Threading.Tasks.Task`1" /> that represents the result of the asynchronous query, a list of <see cref="T:System.Security.Claims.Claim" />s grouped by tenant id.
         /// </returns>
-        Task<IDictionary<TKey, IList<Claim>>> GetClaimsAsync(TUser user, CancellationToken cancellationToken);
+        Task<IDictionary<TTenantKey, IList<Claim>>> GetClaimsAsync(TUser user, CancellationToken cancellationToken);
 
         /// <summary>
         /// Add claims to a user as an asynchronous operation.
@@ -43,7 +43,7 @@ namespace IdentityFramework.Iam.Core.Interface
         /// <returns>
         /// The task object representing the asynchronous operation.
         /// </returns>
-        Task AddClaimsAsync(TUser user, TKey tenantId, IEnumerable<Claim> claims, CancellationToken cancellationToken);
+        Task AddClaimsAsync(TUser user, TTenantKey tenantId, IEnumerable<Claim> claims, CancellationToken cancellationToken);
 
         /// <summary>
         /// Replaces the given <paramref name="claim" /> on the specified <paramref name="user" /> with the <paramref name="newClaim" />
@@ -56,7 +56,7 @@ namespace IdentityFramework.Iam.Core.Interface
         /// <returns>
         /// The task object representing the asynchronous operation.
         /// </returns>
-        Task ReplaceClaimAsync(TUser user, TKey tenantId, Claim claim, Claim newClaim, CancellationToken cancellationToken);
+        Task ReplaceClaimAsync(TUser user, TTenantKey tenantId, Claim claim, Claim newClaim, CancellationToken cancellationToken);
 
         /// <summary>
         /// Removes the specified <paramref name="claims" /> from the given <paramref name="user" />.
@@ -68,7 +68,7 @@ namespace IdentityFramework.Iam.Core.Interface
         /// <returns>
         /// The task object representing the asynchronous operation.
         /// </returns>
-        Task RemoveClaimsAsync(TUser user, TKey tenantId, IEnumerable<Claim> claims, CancellationToken cancellationToken);
+        Task RemoveClaimsAsync(TUser user, TTenantKey tenantId, IEnumerable<Claim> claims, CancellationToken cancellationToken);
 
         /// <summary>
         /// Returns a list of users who contain the specified <see cref="T:System.Security.Claims.Claim" />.
@@ -80,6 +80,6 @@ namespace IdentityFramework.Iam.Core.Interface
         /// A <see cref="T:System.Threading.Tasks.Task`1" /> that represents the result of the asynchronous query, a list of <typeparamref name="TUser" /> who
         /// contain the specified claim.
         /// </returns>
-        Task<IList<TUser>> GetUsersForClaimAsync(Claim claim, TKey tenantId, CancellationToken cancellationToken);
+        Task<IList<TUser>> GetUsersForClaimAsync(Claim claim, TTenantKey tenantId, CancellationToken cancellationToken);
     }
 }

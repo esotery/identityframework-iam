@@ -6,7 +6,12 @@ using System.Threading.Tasks;
 
 namespace IdentityFramework.Iam.Core.Interface
 {
-    public class DefaultTenantProvider<TKey> : ITenantProvider<TKey>
+    /// <summary>
+    /// Default tenant provider which extracts the tenant id from header
+    /// </summary>
+    /// <typeparam name="TTenantKey">The type of the tenant key.</typeparam>
+    /// <seealso cref="IdentityFramework.Iam.Core.Interface.ITenantProvider{TTenantKey}" />
+    public class DefaultTenantProvider<TTenantKey> : ITenantProvider<TTenantKey>
     {
         private readonly IHttpContextAccessor _accessor;
         private readonly IamTenantProviderOptions _options;
@@ -19,14 +24,14 @@ namespace IdentityFramework.Iam.Core.Interface
             _options = options.Value;
         }
 
-        Task<TKey> ITenantProvider<TKey>.CurrentTenantId()
+        Task<TTenantKey> ITenantProvider<TTenantKey>.CurrentTenantId()
         {
             var tenantIdStr = _accessor.HttpContext?.Request?.Headers[_options.HeaderName].ToArray().FirstOrDefault() ?? "";
-            TKey ret = default(TKey);
+            TTenantKey ret = default(TTenantKey);
 
             try
             {
-                ret = (TKey)Convert.ChangeType(tenantIdStr, typeof(TKey));
+                ret = (TTenantKey)Convert.ChangeType(tenantIdStr, typeof(TTenantKey));
             }
             catch
             {
