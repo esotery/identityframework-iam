@@ -11,6 +11,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IdentityFramework.Iam.TestS
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IdentityFramework.Iam.Ef", "..\..\lib\IdentityFramework.Iam\IdentityFramework.Iam.Ef\IdentityFramework.Iam.Ef.csproj", "{FB6AC3E0-917B-4702-A485-0ED9E84E55E5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IdentityFramework.Iam.Ef.Test", "IdentityFramework.Iam.Ef.Test\IdentityFramework.Iam.Ef.Test.csproj", "{4199D59B-B87D-4FAC-9D42-7476F7991537}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{FB6AC3E0-917B-4702-A485-0ED9E84E55E5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FB6AC3E0-917B-4702-A485-0ED9E84E55E5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FB6AC3E0-917B-4702-A485-0ED9E84E55E5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4199D59B-B87D-4FAC-9D42-7476F7991537}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4199D59B-B87D-4FAC-9D42-7476F7991537}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4199D59B-B87D-4FAC-9D42-7476F7991537}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4199D59B-B87D-4FAC-9D42-7476F7991537}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
