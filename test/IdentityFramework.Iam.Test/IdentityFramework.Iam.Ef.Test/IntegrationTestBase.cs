@@ -1,13 +1,15 @@
-﻿using IdentityFramework.Iam.Core.Interface;
+﻿using IdentityFramework.Iam.Ef.Context;
+using IdentityFramework.Iam.TestServer;
 using IdentityFramework.Iam.TestServer.Jwt;
 using IdentityFramework.Iam.TestServer.Models;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
@@ -26,12 +28,31 @@ namespace IdentityFramework.Iam.Ef.Test
                 {
                     config.AddInMemoryCollection(new Dictionary<string, string>()
                     {
-                        { "UseMultitenancy", "false" }
+                        { "UseMultitenancy", "false" },
+                        { "TestMode", "true" }
                     });
                 })
                 .ConfigureTestServices(services =>
                  {
-                     services.Remove(services.First(s => s.ServiceType == typeof(IIamProvider)));
+                     services.AddIdentity<User, Role>()
+                        .AddEntityFrameworkStores<IamDbContext<User, Role, long>>()
+                        .AddDefaultTokenProviders();
+
+                     services.AddAuthentication(options =>
+                     {
+                         options.DefaultAuthenticateScheme = "Bearer";
+                         options.DefaultChallengeScheme = "Bearer";
+
+                     }).AddJwtBearer(configureOptions =>
+                     {
+                         configureOptions.ClaimsIssuer = Startup.TokenValidationParameters.ValidIssuer;
+                         configureOptions.TokenValidationParameters = Startup.TokenValidationParameters;
+                         configureOptions.SaveToken = true;
+                     });
+
+                     services.AddAuthorization();
+
+                     services.AddMvc();
 
                      services.AddIamEntityFramework<User, Role, long>(options =>
                          options.UseInMemoryDatabase("test"));

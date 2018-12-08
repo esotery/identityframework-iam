@@ -15,6 +15,16 @@ namespace IdentityFramework.Iam.Ef.Context
     {
         public DbSet<Policy<TKey>> IamPolicies { get; set; }
 
+        public IamDbContextBase(DbContextOptions options) : base(options)
+        {
+
+        }
+
+        protected IamDbContextBase() : base()
+        {
+
+        }
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
@@ -33,6 +43,14 @@ namespace IdentityFramework.Iam.Ef.Context
         where TRole : IdentityRole<TKey> 
         where TKey : IEquatable<TKey>
     {
-        
+        public IamDbContextBase(DbContextOptions options) : base(options)
+        {
+
+        }
+
+        protected IamDbContextBase() : base()
+        {
+
+        }
     }
 }

@@ -6,13 +6,23 @@ using System;
 namespace IdentityFramework.Iam.Ef.Context
 {
     public class MultiTenantIamDbContext<TUser, TRole, TKey, TTenantKey> : IamDbContextBase<TUser, TRole, TKey, MultiTenantIdentityUserClaim<TKey, TTenantKey>, MultiTenantIdentityUserRole<TKey, TTenantKey>>
-        where TUser : IdentityUser<TKey> 
-        where TRole : IdentityRole<TKey> 
-        where TKey : IEquatable<TKey> 
+        where TUser : IdentityUser<TKey>
+        where TRole : IdentityRole<TKey>
+        where TKey : IEquatable<TKey>
         where TTenantKey : IEquatable<TTenantKey>
     {
         public DbSet<MultiTenantPolicyClaim<TKey, TTenantKey>> IamPolicyClaims { get; set; }
         public DbSet<MultiTenantPolicyRole<TKey, TTenantKey>> IamPolicyRoles { get; set; }
+
+        public MultiTenantIamDbContext(DbContextOptions<MultiTenantIamDbContext<TUser, TRole, TKey, TTenantKey>> options) : base(options)
+        {
+
+        }
+
+        protected MultiTenantIamDbContext(DbContextOptions options) : base(options)
+        {
+
+        }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -43,9 +53,10 @@ namespace IdentityFramework.Iam.Ef.Context
                     .OnDelete(DeleteBehavior.Cascade);
             });
 
+            builder.Ignore<MultiTenantIdentityUserRole<TKey, TTenantKey>>();
             builder.Entity<MultiTenantIdentityUserRole<TKey, TTenantKey>>(action =>
             {
-                action.HasAlternateKey(r => new { r.UserId, r.RoleId, r.TenantId });
+                action.HasKey(r => new { r.UserId, r.RoleId, r.TenantId });
             });
         }
     }

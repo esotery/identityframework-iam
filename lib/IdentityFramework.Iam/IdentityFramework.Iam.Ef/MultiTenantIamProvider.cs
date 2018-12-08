@@ -91,9 +91,12 @@ namespace IdentityFramework.Iam.Ef
                     .AsNoTracking()
                     .FirstOrDefaultAsync(x => x.PolicyId.Equals(policyId) && x.TenantId.Equals(tenantId));
 
-                ret = policy.Claim;
+                ret = policy?.Claim;
 
-                cache.AddOrUpdateClaim(policyName, tenantId, ret);
+                if (policy != null)
+                {
+                    cache.AddOrUpdateClaim(policyName, tenantId, ret);
+                }
             }
 
             return ret;

@@ -10,6 +10,16 @@ namespace IdentityFramework.Iam.Ef.Context
         public DbSet<PolicyClaim<TKey>> IamPolicyClaims { get; set; }
         public DbSet<PolicyRole<TKey>> IamPolicyRoles { get; set; }
 
+        public IamDbContext(DbContextOptions<IamDbContext<TUser, TRole, TKey>> options) : base(options)
+        {
+
+        }
+
+        protected IamDbContext(DbContextOptions options) : base(options)
+        {
+
+        }
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
