@@ -5,10 +5,15 @@ using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Respawn;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 
 namespace IdentityFramework.Iam.TestServer
 {
@@ -24,13 +29,28 @@ namespace IdentityFramework.Iam.TestServer
         }
 
         public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
-            WebHost.CreateDefaultBuilder(args)
+             WebHost.CreateDefaultBuilder(args)
+                .ConfigureAppConfiguration((hostingContext, config) =>
+                {
+                    config.SetBasePath(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location));
+                    config.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+                    config.AddEnvironmentVariables();
+                })
                 .UseStartup<Startup>();
 
-        public static void SeedData(IServiceProvider provider)
+        public static void SeedData(IServiceProvider provider, Type dbContextType = null, string connectionString = null)
         {
             using (var scope = provider.CreateScope())
             {
+                if (dbContextType != null)
+                {
+                    var dbContext = scope.ServiceProvider.GetRequiredService(dbContextType) as DbContext;
+
+                    dbContext.Database.EnsureCreated();
+
+                    new Checkpoint().Reset(connectionString).Wait();
+                }
+
                 var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
                 var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<Role>>();
                 var iamProvider = scope.ServiceProvider.GetRequiredService<IIamProvider>();
@@ -52,10 +72,19 @@ namespace IdentityFramework.Iam.TestServer
             }
         }
 
-        public static void SeedMtData(IServiceProvider provider)
+        public static void SeedMtData(IServiceProvider provider, Type dbContextType = null, string connectionString = null)
         {
             using (var scope = provider.CreateScope())
             {
+                if (dbContextType != null)
+                {
+                    var dbContext = scope.ServiceProvider.GetRequiredService(dbContextType) as DbContext;
+
+                    dbContext.Database.EnsureCreated();
+
+                    new Checkpoint().Reset(connectionString).Wait();
+                }
+
                 var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
                 var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<Role>>();
                 var iamProvider = scope.ServiceProvider.GetRequiredService<IMultiTenantIamProvider<long>>();

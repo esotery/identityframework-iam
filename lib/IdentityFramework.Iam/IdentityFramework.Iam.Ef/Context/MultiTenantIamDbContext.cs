@@ -57,6 +57,7 @@ namespace IdentityFramework.Iam.Ef.Context
             builder.Entity<MultiTenantIdentityUserRole<TKey, TTenantKey>>(action =>
             {
                 action.HasKey(r => new { r.UserId, r.RoleId, r.TenantId });
+                action.ToTable<MultiTenantIdentityUserRole<TKey, TTenantKey>>("AspNetUserRoles");
             });
         }
     }

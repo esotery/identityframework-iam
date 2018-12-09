@@ -59,9 +59,9 @@ namespace IdentityFramework.Iam.Ef.Test
                     services.AddMvc();
 
                     services.AddMultiTenantIamEntifyFramework<User, Role, long, long>(options =>
-                        options.UseInMemoryDatabase("test"));
+                       options.UseSqlServer(ConfigurationHelper.GetConnectionString(true)));
                 }));
-            IdentityFramework.Iam.TestServer.Program.SeedMtData(server.Host.Services);
+            IdentityFramework.Iam.TestServer.Program.SeedMtData(server.Host.Services, typeof(MultiTenantIamDbContext<User, Role, long, long>), ConfigurationHelper.GetConnectionString(true));
         }
 
         protected async Task<string> LoginUser(HttpClient client, string email, string password)

@@ -10,7 +10,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using System.Collections.Generic;
+using System.IO;
 using System.Net.Http;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -18,14 +20,16 @@ namespace IdentityFramework.Iam.Ef.Test
 {
     public abstract class IntegrationTestBase
     {
-        protected Microsoft.AspNetCore.TestHost.TestServer server;
+        protected readonly Microsoft.AspNetCore.TestHost.TestServer _server;
 
         protected IntegrationTestBase()
         {
-            server = new Microsoft.AspNetCore.TestHost.TestServer(new WebHostBuilder()
+            _server = new Microsoft.AspNetCore.TestHost.TestServer(new WebHostBuilder()
                 .UseStartup<IdentityFramework.Iam.TestServer.Startup>()
                 .ConfigureAppConfiguration((hostingContext, config) =>
                 {
+                    config.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+                    config.AddEnvironmentVariables();
                     config.AddInMemoryCollection(new Dictionary<string, string>()
                     {
                         { "UseMultitenancy", "false" },
@@ -55,9 +59,10 @@ namespace IdentityFramework.Iam.Ef.Test
                      services.AddMvc();
 
                      services.AddIamEntityFramework<User, Role, long>(options =>
-                         options.UseInMemoryDatabase("test"));
+                         options.UseSqlServer(ConfigurationHelper.GetConnectionString()));
                  }));
-            IdentityFramework.Iam.TestServer.Program.SeedData(server.Host.Services);
+
+            IdentityFramework.Iam.TestServer.Program.SeedData(_server.Host.Services, typeof(IamDbContext<User, Role, long>), ConfigurationHelper.GetConnectionString());
         }
 
         protected async Task<string> LoginUser(HttpClient client, string email, string password)
