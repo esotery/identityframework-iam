@@ -11,6 +11,14 @@ using System.Threading.Tasks;
 
 namespace IdentityFramework.Iam.Ef.Store
 {
+    /// <summary>
+    /// EF implementation of extended user role store.
+    /// </summary>
+    /// <typeparam name="TUser">The type of the user.</typeparam>
+    /// <typeparam name="TRole">The type of the role.</typeparam>
+    /// <typeparam name="TKey">The type of the key.</typeparam>
+    /// <typeparam name="TTenantKey">The type of the tenant key.</typeparam>
+    /// <seealso cref="IdentityFramework.Iam.Core.Interface.IMultiTenantUserRoleStore{TUser, TTenantKey}" />
     public class MultiTenantUserRoleStore<TUser, TRole, TKey, TTenantKey> : IMultiTenantUserRoleStore<TUser, TTenantKey>
         where TUser : IdentityUser<TKey>
         where TRole : IdentityRole<TKey>

@@ -5,6 +5,13 @@ using System;
 
 namespace IdentityFramework.Iam.Ef.Context
 {
+    /// <summary>
+    /// IAM context which adds policy claims and policy roles mappings.
+    /// </summary>
+    /// <typeparam name="TUser">The type of the user.</typeparam>
+    /// <typeparam name="TRole">The type of the role.</typeparam>
+    /// <typeparam name="TKey">The type of the key.</typeparam>
+    /// <seealso cref="IdentityFramework.Iam.Ef.Context.IamDbContextBase{TUser, TRole, TKey}" />
     public class IamDbContext<TUser, TRole, TKey> : IamDbContextBase<TUser, TRole, TKey> where TUser : IdentityUser<TKey> where TRole : IdentityRole<TKey> where TKey : IEquatable<TKey>
     {
         public DbSet<PolicyClaim<TKey>> IamPolicyClaims { get; set; }

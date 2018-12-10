@@ -5,6 +5,14 @@ using System;
 
 namespace IdentityFramework.Iam.Ef.Context
 {
+    /// <summary>
+    /// Multi tenant IAM context. Overrides default user claims and user roles, it also defines policy claims and policy roles mappings.
+    /// </summary>
+    /// <typeparam name="TUser">The type of the user.</typeparam>
+    /// <typeparam name="TRole">The type of the role.</typeparam>
+    /// <typeparam name="TKey">The type of the key.</typeparam>
+    /// <typeparam name="TTenantKey">The type of the tenant key.</typeparam>
+    /// <seealso cref="IdentityFramework.Iam.Ef.Context.IamDbContextBase{TUser, TRole, TKey, IdentityFramework.Iam.Ef.Model.MultiTenantIdentityUserClaim{TKey, TTenantKey}, IdentityFramework.Iam.Ef.Model.MultiTenantIdentityUserRole{TKey, TTenantKey}}" />
     public class MultiTenantIamDbContext<TUser, TRole, TKey, TTenantKey> : IamDbContextBase<TUser, TRole, TKey, MultiTenantIdentityUserClaim<TKey, TTenantKey>, MultiTenantIdentityUserRole<TKey, TTenantKey>>
         where TUser : IdentityUser<TKey>
         where TRole : IdentityRole<TKey>
@@ -14,6 +22,10 @@ namespace IdentityFramework.Iam.Ef.Context
         public DbSet<MultiTenantPolicyClaim<TKey, TTenantKey>> IamPolicyClaims { get; set; }
         public DbSet<MultiTenantPolicyRole<TKey, TTenantKey>> IamPolicyRoles { get; set; }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MultiTenantIamDbContext{TUser, TRole, TKey, TTenantKey}"/> class.
+        /// </summary>
+        /// <param name="options">The options.</param>
         public MultiTenantIamDbContext(DbContextOptions<MultiTenantIamDbContext<TUser, TRole, TKey, TTenantKey>> options) : base(options)
         {
 

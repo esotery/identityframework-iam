@@ -2,6 +2,10 @@
 
 namespace IdentityFramework.Iam.Ef.Model
 {
+    /// <summary>
+    /// Defines mapping between policy and claim.
+    /// </summary>
+    /// <typeparam name="TKey">The type of the key.</typeparam>
     public class PolicyClaim<TKey> where TKey : IEquatable<TKey>
     {
         public virtual TKey Id { get; set; }

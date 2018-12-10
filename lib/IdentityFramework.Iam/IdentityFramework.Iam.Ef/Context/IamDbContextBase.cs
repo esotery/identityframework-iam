@@ -6,6 +6,15 @@ using System;
 
 namespace IdentityFramework.Iam.Ef.Context
 {
+    /// <summary>
+    /// Base IAM context inheriting IdentityContext adding Policies
+    /// </summary>
+    /// <typeparam name="TUser">The type of the user.</typeparam>
+    /// <typeparam name="TRole">The type of the role.</typeparam>
+    /// <typeparam name="TKey">The type of the key.</typeparam>
+    /// <typeparam name="TUserClaim">The type of the user claim.</typeparam>
+    /// <typeparam name="TUserRole">The type of the user role.</typeparam>
+    /// <seealso cref="Microsoft.AspNetCore.Identity.EntityFrameworkCore.IdentityDbContext{TUser, TRole, TKey, TUserClaim, TUserRole, Microsoft.AspNetCore.Identity.IdentityUserLogin{TKey}, Microsoft.AspNetCore.Identity.IdentityRoleClaim{TKey}, Microsoft.AspNetCore.Identity.IdentityUserToken{TKey}}" />
     public class IamDbContextBase<TUser, TRole, TKey, TUserClaim, TUserRole> : IdentityDbContext<TUser, TRole, TKey, TUserClaim, TUserRole, IdentityUserLogin<TKey>, IdentityRoleClaim<TKey>, IdentityUserToken<TKey>> 
         where TUser : IdentityUser<TKey> 
         where TRole : IdentityRole<TKey> 
@@ -15,6 +24,10 @@ namespace IdentityFramework.Iam.Ef.Context
     {
         public DbSet<Policy<TKey>> IamPolicies { get; set; }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="IamDbContextBase{TUser, TRole, TKey, TUserClaim, TUserRole}"/> class.
+        /// </summary>
+        /// <param name="options">The options to be used by a <see cref="T:Microsoft.EntityFrameworkCore.DbContext" />.</param>
         public IamDbContextBase(DbContextOptions options) : base(options)
         {
 

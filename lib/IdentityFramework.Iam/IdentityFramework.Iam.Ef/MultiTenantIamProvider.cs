@@ -9,6 +9,15 @@ using System.Threading.Tasks;
 
 namespace IdentityFramework.Iam.Ef
 {
+    /// <summary>
+    /// Multi tenant EF IMultiTenantIamProvider implementation.
+    /// </summary>
+    /// <typeparam name="TUser">The type of the user.</typeparam>
+    /// <typeparam name="TRole">The type of the role.</typeparam>
+    /// <typeparam name="TKey">The type of the key.</typeparam>
+    /// <typeparam name="TTenantKey">The type of the tenant key.</typeparam>
+    /// <seealso cref="IdentityFramework.Iam.Ef.IamProviderBase{TKey}" />
+    /// <seealso cref="IdentityFramework.Iam.Core.Interface.IMultiTenantIamProvider{TTenantKey}" />
     public class MultiTenantIamProvider<TUser, TRole, TKey, TTenantKey> : IamProviderBase<TKey>, IMultiTenantIamProvider<TTenantKey> 
         where TUser : IdentityUser<TKey> 
         where TRole : IdentityRole<TKey>

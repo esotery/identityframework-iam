@@ -9,6 +9,14 @@ using System.Threading.Tasks;
 
 namespace IdentityFramework.Iam.Ef
 {
+    /// <summary>
+    /// EF implementation of the IIamProvider.
+    /// </summary>
+    /// <typeparam name="TUser">The type of the user.</typeparam>
+    /// <typeparam name="TRole">The type of the role.</typeparam>
+    /// <typeparam name="TKey">The type of the key.</typeparam>
+    /// <seealso cref="IdentityFramework.Iam.Ef.IamProviderBase{TKey}" />
+    /// <seealso cref="IdentityFramework.Iam.Core.Interface.IIamProvider" />
     public class IamProvider<TUser, TRole, TKey> : IamProviderBase<TKey>, IIamProvider where TUser : IdentityUser<TKey> where TRole : IdentityRole<TKey> where TKey : IEquatable<TKey>
     {
         protected readonly IamDbContext<TUser, TRole, TKey> _context;
