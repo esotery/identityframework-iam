@@ -4,13 +4,21 @@
     <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
 
+  <Choose>
+    <When Condition="'$(Configuration)' == 'Release'">
+      <ItemGroup>
+        <PackageReference Include="IdentityFramework.Iam.Core" Version="1.0.0" />
+      </ItemGroup>
+    </When>
+    <Otherwise>
+      <ItemGroup>
+        <ProjectReference Include="..\IdentityFramework.Iam.Core\IdentityFramework.Iam.Core.csproj" />
+      </ItemGroup>
+    </Otherwise>
+  </Choose>
+  
   <ItemGroup>
-    <PackageReference Condition="'$(Configuration)'=='Release'" Include="IdentityFramework.Iam.Core" Version="1.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="2.2.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Condition="'$(Configuration)'=='Debug'" Include="..\IdentityFramework.Iam.Core\IdentityFramework.Iam.Core.csproj" />
   </ItemGroup>
 
 </Project>

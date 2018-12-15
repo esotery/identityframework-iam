@@ -6,8 +6,20 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 
+  <Choose>
+    <When Condition="'$(Configuration)' == 'Release'">
+      <ItemGroup>
+        <PackageReference Include="IdentityFramework.Iam.Core" Version="1.0.0" />
+      </ItemGroup>
+    </When>
+    <Otherwise>
+      <ItemGroup>
+        <ProjectReference Include="..\..\..\lib\IdentityFramework.Iam\IdentityFramework.Iam.Core\IdentityFramework.Iam.Core.csproj" />
+      </ItemGroup>
+    </Otherwise>
+  </Choose>
+
   <ItemGroup>
-    <PackageReference Condition="'$(Configuration)'=='Release'" Include="IdentityFramework.Iam.Core" Version="1.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.App" Version="2.2.0" />
     <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="2.2.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.9.0" />
@@ -17,7 +29,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\IdentityFramework.Iam.TestServer\IdentityFramework.Iam.TestServer.csproj" />
-    <ProjectReference Condition="'$(Configuration)'=='Debug'" Include="..\..\..\lib\IdentityFramework.Iam\IdentityFramework.Iam.Core\IdentityFramework.Iam.Core.csproj" />
   </ItemGroup>
 
 </Project>

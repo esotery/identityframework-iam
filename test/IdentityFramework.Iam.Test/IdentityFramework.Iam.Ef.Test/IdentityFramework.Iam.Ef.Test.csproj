@@ -17,6 +17,19 @@
     </Content>
   </ItemGroup>
 
+  <Choose>
+    <When Condition="'$(Configuration)' == 'Release'">
+      <ItemGroup>
+        <PackageReference Include="IdentityFramework.Iam.Core" Version="1.0.0" />
+      </ItemGroup>
+    </When>
+    <Otherwise>
+      <ItemGroup>
+        <ProjectReference Include="..\..\..\lib\IdentityFramework.Iam\IdentityFramework.Iam.Core\IdentityFramework.Iam.Core.csproj" />
+      </ItemGroup>
+    </Otherwise>
+  </Choose>
+
   <ItemGroup>
     <PackageReference Condition="'$(Configuration)'=='Release'" Include="IdentityFramework.Iam.Core" Version="1.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.App" Version="2.2.0" />
@@ -28,7 +41,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Condition="'$(Configuration)'=='Debug'" Include="..\..\..\lib\IdentityFramework.Iam\IdentityFramework.Iam.Core\IdentityFramework.Iam.Core.csproj" />
     <ProjectReference Include="..\..\..\lib\IdentityFramework.Iam\IdentityFramework.Iam.Ef\IdentityFramework.Iam.Ef.csproj" />
     <ProjectReference Include="..\IdentityFramework.Iam.TestServer\IdentityFramework.Iam.TestServer.csproj" />
   </ItemGroup>
