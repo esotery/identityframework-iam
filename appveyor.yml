@@ -27,5 +27,6 @@ clone_depth: 1
 test_script:
   - cmd: dotnet restore ./test/IdentityFramework.Iam.Test --verbosity m
   - cmd: dotnet test ./test/IdentityFramework.Iam.Test\IdentityFramework.Iam.Test
+  - cmd: dotnet test ./test/IdentityFramework.Iam.Test\IdentityFramework.Iam.Ef.Test
 on_finish :
 deploy: off

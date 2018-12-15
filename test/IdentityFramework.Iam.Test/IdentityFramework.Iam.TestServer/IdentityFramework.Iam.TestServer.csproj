@@ -11,6 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Condition="'$(Configuration)'=='Release'" Include="IdentityFramework.Iam.Core" Version="1.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Microsoft.AspNetCore.Razor.Design" Version="2.2.0" PrivateAssets="All" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="2.2.0" />
@@ -19,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\lib\IdentityFramework.Iam\IdentityFramework.Iam.Core\IdentityFramework.Iam.Core.csproj" />
+    <ProjectReference Condition="'$(Configuration)'=='Debug'" Include="..\..\..\lib\IdentityFramework.Iam\IdentityFramework.Iam.Core\IdentityFramework.Iam.Core.csproj" />
   </ItemGroup>
 
 </Project>
