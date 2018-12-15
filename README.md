@@ -2,6 +2,10 @@
 
 Extends rather static .NET IdentityFramework Policies of fine grained IAM rules for better and more dynamic Authorization handling.
 
+# Identityframework-Iam-Ef
+
+Implements the interfaces defined in ``IdentityFramework.Iam.Core`` with help of EF Core. If you are using an EF in your project this is the package you want to use:).
+
 ## Purpose
 
 As you may know, the new Identity framework pushes for the use of policies as the solve-it-all security concept. The policies are really great and I personally like them. What I don't like is that they are somewhat static by nature. 
@@ -46,8 +50,7 @@ With the IdentityFramework.Iam, you can achieve following in the multi-tenant sc
 
 Sorted by priority
 
-1. IdentityFramework.Iam.Ef - provide default implementation of *IIamProvider* and *IIamMultiTenantProvider<T>* over *IdentityContext*
-2. IdentityFramework.Iam.Mvc - provide both REST API and MVC endpoints to make managing users, roles and their connections to permissions easie. Sort of admin dashboard for IAM.
+1. IdentityFramework.Iam.Mvc - provide both REST API and MVC endpoints to make managing users, roles and their connections to permissions easie. Sort of admin dashboard for IAM.
 
 ## Usage
 
