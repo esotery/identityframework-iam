@@ -2,12 +2,20 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <Authors>Jan Czopik</Authors>
+    <Description>Extends rather static .NET IdentityFramework Policies of fine grained IAM rules for better and more dynamic Authorization handling. This package extends the Core package with default implementation of all interfaces using EF Core.</Description>
+    <Copyright>Jan Czopik</Copyright>
+    <PackageLicenseUrl>https://github.com/esotery/identityframework-iam/blob/master/LICENSE</PackageLicenseUrl>
+    <PackageProjectUrl>https://github.com/esotery/identityframework-iam</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/esotery/identityframework-iam.git</RepositoryUrl>
+    <RepositoryType>GIT</RepositoryType>
+    <PackageTags>Identity framework, IAM, Multi-tenancy, Entity framework, EF</PackageTags>
   </PropertyGroup>
 
   <Choose>
     <When Condition="'$(Configuration)' == 'Release'">
       <ItemGroup>
-        <PackageReference Include="IdentityFramework.Iam.Core" Version="1.0.0" />
+        <PackageReference Include="IdentityFramework.Iam.Core" Version="1.0.1" />
       </ItemGroup>
     </When>
     <Otherwise>
