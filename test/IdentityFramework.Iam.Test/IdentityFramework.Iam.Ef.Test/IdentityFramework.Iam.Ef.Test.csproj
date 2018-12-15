@@ -6,6 +6,17 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <None Remove="appsettings.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="appsettings.json">
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
   <Choose>
     <When Condition="'$(Configuration)' == 'Release'">
       <ItemGroup>
@@ -20,14 +31,17 @@
   </Choose>
 
   <ItemGroup>
+    <PackageReference Condition="'$(Configuration)'=='Release'" Include="IdentityFramework.Iam.Core" Version="1.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.App" Version="2.2.0" />
     <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="2.2.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.9.0" />
     <PackageReference Include="MSTest.TestAdapter" Version="1.4.0" />
     <PackageReference Include="MSTest.TestFramework" Version="1.4.0" />
+    <PackageReference Include="Respawn" Version="3.1.0" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\lib\IdentityFramework.Iam\IdentityFramework.Iam.Ef\IdentityFramework.Iam.Ef.csproj" />
     <ProjectReference Include="..\IdentityFramework.Iam.TestServer\IdentityFramework.Iam.TestServer.csproj" />
   </ItemGroup>
 

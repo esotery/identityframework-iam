@@ -1,5 +1,6 @@
 ﻿using IdentityFramework.Iam.Core;
 using IdentityFramework.Iam.Core.Interface;
+using IdentityFramework.Iam.Ef.Context;
 using IdentityFramework.Iam.TestServer;
 using IdentityFramework.Iam.TestServer.Iam;
 using IdentityFramework.Iam.TestServer.Jwt;
@@ -17,13 +18,13 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace IdentityFramework.Iam.Test
+namespace IdentityFramework.Iam.Ef.Test
 {
-    public abstract class IntegrationTestBase
+    public abstract class MultiTenantIntegrationTestBase
     {
         protected Microsoft.AspNetCore.TestHost.TestServer server;
 
-        protected IntegrationTestBase()
+        protected MultiTenantIntegrationTestBase()
         {
             server = new Microsoft.AspNetCore.TestHost.TestServer(new WebHostBuilder()
                 .UseStartup<IdentityFramework.Iam.TestServer.Startup>()
@@ -31,14 +32,14 @@ namespace IdentityFramework.Iam.Test
                 {
                     config.AddInMemoryCollection(new Dictionary<string, string>()
                     {
-                        { "UseMultitenancy", "false" },
+                        { "UseMultitenancy", "true" },
                         { "TestMode", "true" }
                     });
                 })
                 .ConfigureTestServices(services =>
                 {
                     services.AddIdentity<User, Role>()
-                        .AddEntityFrameworkStores<IdentityDbContext<User, Role, long>>()
+                        .AddEntityFrameworkStores<MultiTenantIamDbContext<User, Role, long, long>>()
                         .AddDefaultTokenProviders();
 
                     services.AddAuthentication(options =>
@@ -57,14 +58,10 @@ namespace IdentityFramework.Iam.Test
 
                     services.AddMvc();
 
-                    services.AddDbContext<IdentityDbContext<User, Role, long>>(options =>
-                        options.UseInMemoryDatabase("test"));
-
-                    services.AddIamCore();
-
-                    services.AddSingleton<IIamProvider, MemoryIamProvider>();
+                    services.AddMultiTenantIamEntifyFramework<User, Role, long, long>(options =>
+                       options.UseSqlServer(ConfigurationHelper.GetConnectionString(true)));
                 }));
-            IdentityFramework.Iam.TestServer.Program.SeedData(server.Host.Services);
+            IdentityFramework.Iam.TestServer.Program.SeedMtData(server.Host.Services, typeof(MultiTenantIamDbContext<User, Role, long, long>), ConfigurationHelper.GetConnectionString(true));
         }
 
         protected async Task<string> LoginUser(HttpClient client, string email, string password)

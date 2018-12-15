@@ -1,34 +1,35 @@
-﻿using IdentityFramework.Iam.Core;
-using IdentityFramework.Iam.Core.Interface;
+﻿using IdentityFramework.Iam.Ef.Context;
 using IdentityFramework.Iam.TestServer;
-using IdentityFramework.Iam.TestServer.Iam;
 using IdentityFramework.Iam.TestServer.Jwt;
 using IdentityFramework.Iam.TestServer.Models;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using System.Collections.Generic;
+using System.IO;
 using System.Net.Http;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace IdentityFramework.Iam.Test
+namespace IdentityFramework.Iam.Ef.Test
 {
     public abstract class IntegrationTestBase
     {
-        protected Microsoft.AspNetCore.TestHost.TestServer server;
+        protected readonly Microsoft.AspNetCore.TestHost.TestServer _server;
 
         protected IntegrationTestBase()
         {
-            server = new Microsoft.AspNetCore.TestHost.TestServer(new WebHostBuilder()
+            _server = new Microsoft.AspNetCore.TestHost.TestServer(new WebHostBuilder()
                 .UseStartup<IdentityFramework.Iam.TestServer.Startup>()
                 .ConfigureAppConfiguration((hostingContext, config) =>
                 {
+                    config.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+                    config.AddEnvironmentVariables();
                     config.AddInMemoryCollection(new Dictionary<string, string>()
                     {
                         { "UseMultitenancy", "false" },
@@ -36,35 +37,32 @@ namespace IdentityFramework.Iam.Test
                     });
                 })
                 .ConfigureTestServices(services =>
-                {
-                    services.AddIdentity<User, Role>()
-                        .AddEntityFrameworkStores<IdentityDbContext<User, Role, long>>()
+                 {
+                     services.AddIdentity<User, Role>()
+                        .AddEntityFrameworkStores<IamDbContext<User, Role, long>>()
                         .AddDefaultTokenProviders();
 
-                    services.AddAuthentication(options =>
-                    {
-                        options.DefaultAuthenticateScheme = "Bearer";
-                        options.DefaultChallengeScheme = "Bearer";
+                     services.AddAuthentication(options =>
+                     {
+                         options.DefaultAuthenticateScheme = "Bearer";
+                         options.DefaultChallengeScheme = "Bearer";
 
-                    }).AddJwtBearer(configureOptions =>
-                    {
-                        configureOptions.ClaimsIssuer = Startup.TokenValidationParameters.ValidIssuer;
-                        configureOptions.TokenValidationParameters = Startup.TokenValidationParameters;
-                        configureOptions.SaveToken = true;
-                    });
+                     }).AddJwtBearer(configureOptions =>
+                     {
+                         configureOptions.ClaimsIssuer = Startup.TokenValidationParameters.ValidIssuer;
+                         configureOptions.TokenValidationParameters = Startup.TokenValidationParameters;
+                         configureOptions.SaveToken = true;
+                     });
 
-                    services.AddAuthorization();
+                     services.AddAuthorization();
 
-                    services.AddMvc();
+                     services.AddMvc();
 
-                    services.AddDbContext<IdentityDbContext<User, Role, long>>(options =>
-                        options.UseInMemoryDatabase("test"));
+                     services.AddIamEntityFramework<User, Role, long>(options =>
+                         options.UseSqlServer(ConfigurationHelper.GetConnectionString()));
+                 }));
 
-                    services.AddIamCore();
-
-                    services.AddSingleton<IIamProvider, MemoryIamProvider>();
-                }));
-            IdentityFramework.Iam.TestServer.Program.SeedData(server.Host.Services);
+            IdentityFramework.Iam.TestServer.Program.SeedData(_server.Host.Services, typeof(IamDbContext<User, Role, long>), ConfigurationHelper.GetConnectionString());
         }
 
         protected async Task<string> LoginUser(HttpClient client, string email, string password)

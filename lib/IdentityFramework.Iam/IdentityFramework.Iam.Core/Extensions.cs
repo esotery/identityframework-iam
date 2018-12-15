@@ -20,16 +20,16 @@ namespace IdentityFramework.Iam.Core
         /// Adds to role asynchronously.
         /// </summary>
         /// <typeparam name="TUser">The type of the user.</typeparam>
-        /// <typeparam name="TKey">The type of the tenant id.</typeparam>
+        /// <typeparam name="TTenantKey">The type of the tenant id.</typeparam>
         /// <param name="userManager">The user manager.</param>
         /// <param name="roleStore">The role store.</param>
         /// <param name="user">The user.</param>
         /// <param name="tenantId">The tenant identifier.</param>
         /// <param name="roleName">Name of the role.</param>
         /// <returns></returns>
-        public static async Task<IdentityResult> AddToRoleAsync<TUser, TKey>(this UserManager<TUser> userManager, IMultiTenantUserRoleStore<TUser, TKey> roleStore, TUser user, TKey tenantId, string roleName) where TUser : class
+        public static async Task<IdentityResult> AddToRoleAsync<TUser, TTenantKey>(this UserManager<TUser> userManager, IMultiTenantUserRoleStore<TUser, TTenantKey> roleStore, TUser user, TTenantKey tenantId, string roleName) where TUser : class
         {
-            var ret = await userManager.AddToRolesAsync<TUser, TKey>(roleStore, user, tenantId, roleName);
+            var ret = await userManager.AddToRolesAsync<TUser, TTenantKey>(roleStore, user, tenantId, roleName);
 
             return ret;
         }
@@ -38,14 +38,14 @@ namespace IdentityFramework.Iam.Core
         /// Adds to roles asynchronously.
         /// </summary>
         /// <typeparam name="TUser">The type of the user.</typeparam>
-        /// <typeparam name="TKey">The type of the tenant id.</typeparam>
+        /// <typeparam name="TTenantKey">The type of the tenant id.</typeparam>
         /// <param name="userManager">The user manager.</param>
         /// <param name="roleStore">The role store.</param>
         /// <param name="user">The user.</param>
         /// <param name="tenantId">The tenant identifier.</param>
         /// <param name="roleNames">The role names.</param>
         /// <returns></returns>
-        public static async Task<IdentityResult> AddToRolesAsync<TUser, TKey>(this UserManager<TUser> userManager, IMultiTenantUserRoleStore<TUser, TKey> roleStore, TUser user, TKey tenantId, params string[] roleNames) where TUser : class
+        public static async Task<IdentityResult> AddToRolesAsync<TUser, TTenantKey>(this UserManager<TUser> userManager, IMultiTenantUserRoleStore<TUser, TTenantKey> roleStore, TUser user, TTenantKey tenantId, params string[] roleNames) where TUser : class
         {
             IdentityResult ret = null;
 
@@ -68,16 +68,16 @@ namespace IdentityFramework.Iam.Core
         /// Removes from role asynchronously.
         /// </summary>
         /// <typeparam name="TUser">The type of the user.</typeparam>
-        /// <typeparam name="TKey">The type of the tenant id.</typeparam>
+        /// <typeparam name="TTenantKey">The type of the tenant id.</typeparam>
         /// <param name="userManager">The user manager.</param>
         /// <param name="roleStore">The role store.</param>
         /// <param name="user">The user.</param>
         /// <param name="tenantId">The tenant identifier.</param>
         /// <param name="roleName">Name of the role.</param>
         /// <returns></returns>
-        public static async Task<IdentityResult> RemoveFromRoleAsync<TUser, TKey>(this UserManager<TUser> userManager, IMultiTenantUserRoleStore<TUser, TKey> roleStore, TUser user, TKey tenantId, string roleName) where TUser : class
+        public static async Task<IdentityResult> RemoveFromRoleAsync<TUser, TTenantKey>(this UserManager<TUser> userManager, IMultiTenantUserRoleStore<TUser, TTenantKey> roleStore, TUser user, TTenantKey tenantId, string roleName) where TUser : class
         {
-            var ret = await userManager.RemoveFromRolesAsync<TUser, TKey>(roleStore, user, tenantId, roleName);
+            var ret = await userManager.RemoveFromRolesAsync<TUser, TTenantKey>(roleStore, user, tenantId, roleName);
 
             return ret;
         }
@@ -86,14 +86,14 @@ namespace IdentityFramework.Iam.Core
         /// Removes from roles asynchronously.
         /// </summary>
         /// <typeparam name="TUser">The type of the user.</typeparam>
-        /// <typeparam name="TKey">The type of the tenant id.</typeparam>
+        /// <typeparam name="TTenantKey">The type of the tenant id.</typeparam>
         /// <param name="userManager">The user manager.</param>
         /// <param name="roleStore">The role store.</param>
         /// <param name="user">The user.</param>
         /// <param name="tenantId">The tenant identifier.</param>
         /// <param name="roleNames">The role names.</param>
         /// <returns></returns>
-        public static async Task<IdentityResult> RemoveFromRolesAsync<TUser, TKey>(this UserManager<TUser> userManager, IMultiTenantUserRoleStore<TUser, TKey> roleStore, TUser user, TKey tenantId, params string[] roleNames) where TUser : class
+        public static async Task<IdentityResult> RemoveFromRolesAsync<TUser, TTenantKey>(this UserManager<TUser> userManager, IMultiTenantUserRoleStore<TUser, TTenantKey> roleStore, TUser user, TTenantKey tenantId, params string[] roleNames) where TUser : class
         {
             IdentityResult ret = null;
 
@@ -116,14 +116,14 @@ namespace IdentityFramework.Iam.Core
         /// Determines whether [is in role asynchronous] [the specified role store].
         /// </summary>
         /// <typeparam name="TUser">The type of the user.</typeparam>
-        /// <typeparam name="TKey">The type of the tenant id.</typeparam>
+        /// <typeparam name="TTenantKey">The type of the tenant id.</typeparam>
         /// <param name="userManager">The user manager.</param>
         /// <param name="roleStore">The role store.</param>
         /// <param name="user">The user.</param>
         /// <param name="tenantId">The tenant identifier.</param>
         /// <param name="roleName">Name of the role.</param>
         /// <returns></returns>
-        public static async Task<bool> IsInRoleAsync<TUser, TKey>(this UserManager<TUser> userManager, IMultiTenantUserRoleStore<TUser, TKey> roleStore, TUser user, TKey tenantId, string roleName) where TUser : class
+        public static async Task<bool> IsInRoleAsync<TUser, TTenantKey>(this UserManager<TUser> userManager, IMultiTenantUserRoleStore<TUser, TTenantKey> roleStore, TUser user, TTenantKey tenantId, string roleName) where TUser : class
         {
             var ret = await roleStore.IsInRoleAsync(user, tenantId, roleName, CancellationToken.None);
 
@@ -134,13 +134,13 @@ namespace IdentityFramework.Iam.Core
         /// Gets the roles asynchronously.
         /// </summary>
         /// <typeparam name="TUser">The type of the user.</typeparam>
-        /// <typeparam name="TKey">The type of the tenant id.</typeparam>
+        /// <typeparam name="TTenantKey">The type of the tenant id.</typeparam>
         /// <param name="userManager">The user manager.</param>
         /// <param name="roleStore">The role store.</param>
         /// <param name="user">The user.</param>
         /// <param name="tenantId">The tenant identifier.</param>
         /// <returns></returns>
-        public static async Task<IEnumerable<string>> GetRolesAsync<TUser, TKey>(this UserManager<TUser> userManager, IMultiTenantUserRoleStore<TUser, TKey> roleStore, TUser user, TKey tenantId) where TUser : class
+        public static async Task<IEnumerable<string>> GetRolesAsync<TUser, TTenantKey>(this UserManager<TUser> userManager, IMultiTenantUserRoleStore<TUser, TTenantKey> roleStore, TUser user, TTenantKey tenantId) where TUser : class
         {
             var ret = await roleStore.GetRolesAsync(user, tenantId, CancellationToken.None);
 
@@ -151,12 +151,12 @@ namespace IdentityFramework.Iam.Core
         /// Gets all roles across tenants asynchronously.
         /// </summary>
         /// <typeparam name="TUser">The type of the user.</typeparam>
-        /// <typeparam name="TKey">The type of the tenant id.</typeparam>
+        /// <typeparam name="TTenantKey">The type of the tenant id.</typeparam>
         /// <param name="userManager">The user manager.</param>
         /// <param name="roleStore">The role store.</param>
         /// <param name="user">The user.</param>
         /// <returns>Roles grouped by tenant id</returns>
-        public static async Task<IDictionary<TKey, IList<string>>> GetRolesAsync<TUser, TKey>(this UserManager<TUser> userManager, IMultiTenantUserRoleStore<TUser, TKey> roleStore, TUser user) where TUser : class
+        public static async Task<IDictionary<TTenantKey, IList<string>>> GetRolesAsync<TUser, TTenantKey>(this UserManager<TUser> userManager, IMultiTenantUserRoleStore<TUser, TTenantKey> roleStore, TUser user) where TUser : class
         {
             var ret = await roleStore.GetRolesAsync(user, CancellationToken.None);
 
@@ -167,13 +167,13 @@ namespace IdentityFramework.Iam.Core
         /// Gets the users in role asynchronously.
         /// </summary>
         /// <typeparam name="TUser">The type of the user.</typeparam>
-        /// <typeparam name="TKey">The type of the tenant id.</typeparam>
+        /// <typeparam name="TTenantKey">The type of the tenant id.</typeparam>
         /// <param name="userManager">The user manager.</param>
         /// <param name="roleStore">The role store.</param>
         /// <param name="roleName">Name of the role.</param>
         /// <param name="tenantId">The tenant identifier.</param>
         /// <returns></returns>
-        public static async Task<IEnumerable<TUser>> GetUsersInRoleAsync<TUser, TKey>(this UserManager<TUser> userManager, IMultiTenantUserRoleStore<TUser, TKey> roleStore, string roleName, TKey tenantId) where TUser : class
+        public static async Task<IEnumerable<TUser>> GetUsersInRoleAsync<TUser, TTenantKey>(this UserManager<TUser> userManager, IMultiTenantUserRoleStore<TUser, TTenantKey> roleStore, string roleName, TTenantKey tenantId) where TUser : class
         {
             var ret = await roleStore.GetUsersInRoleAsync(roleName, tenantId, CancellationToken.None);
 
@@ -184,16 +184,16 @@ namespace IdentityFramework.Iam.Core
         /// Attaches the policy asynchronously.
         /// </summary>
         /// <typeparam name="TUser">The type of the user.</typeparam>
-        /// <typeparam name="TKey">The type of the tenant id.</typeparam>
+        /// <typeparam name="TTenantKey">The type of the tenant id.</typeparam>
         /// <param name="userManager">The user manager.</param>
         /// <param name="claimStore">The claim store.</param>
         /// <param name="user">The user.</param>
         /// <param name="tenantId">The tenant identifier.</param>
         /// <param name="policyName">Name of the policy.</param>
         /// <returns></returns>
-        public static async Task<IdentityResult> AttachPolicyAsync<TUser, TKey>(this UserManager<TUser> userManager, IMultiTenantUserClaimStore<TUser, TKey> claimStore, TUser user, TKey tenantId, string policyName) where TUser : class
+        public static async Task<IdentityResult> AttachPolicyAsync<TUser, TTenantKey>(this UserManager<TUser> userManager, IMultiTenantUserClaimStore<TUser, TTenantKey> claimStore, TUser user, TTenantKey tenantId, string policyName) where TUser : class
         {
-            var ret = await userManager.AttachPoliciesAsync<TUser, TKey>(claimStore, user, tenantId, policyName);
+            var ret = await userManager.AttachPoliciesAsync<TUser, TTenantKey>(claimStore, user, tenantId, policyName);
 
             return ret;
         }
@@ -202,14 +202,14 @@ namespace IdentityFramework.Iam.Core
         /// Attaches the policies asynchronously.
         /// </summary>
         /// <typeparam name="TUser">The type of the user.</typeparam>
-        /// <typeparam name="TKey">The type of the tenant id.</typeparam>
+        /// <typeparam name="TTenantKey">The type of the tenant id.</typeparam>
         /// <param name="userManager">The user manager.</param>
         /// <param name="claimStore">The claim store.</param>
         /// <param name="user">The user.</param>
         /// <param name="tenantId">The tenant identifier.</param>
         /// <param name="policyNames">The policy names.</param>
         /// <returns></returns>
-        public static async Task<IdentityResult> AttachPoliciesAsync<TUser, TKey>(this UserManager<TUser> userManager, IMultiTenantUserClaimStore<TUser, TKey> claimStore, TUser user, TKey tenantId, params string[] policyNames) where TUser : class
+        public static async Task<IdentityResult> AttachPoliciesAsync<TUser, TTenantKey>(this UserManager<TUser> userManager, IMultiTenantUserClaimStore<TUser, TTenantKey> claimStore, TUser user, TTenantKey tenantId, params string[] policyNames) where TUser : class
         {
             IdentityResult ret = null;
 
@@ -224,16 +224,16 @@ namespace IdentityFramework.Iam.Core
         /// Detaches the policy asynchronously.
         /// </summary>
         /// <typeparam name="TUser">The type of the user.</typeparam>
-        /// <typeparam name="TKey">The type of the tenant id.</typeparam>
+        /// <typeparam name="TTenantKey">The type of the tenant id.</typeparam>
         /// <param name="userManager">The user manager.</param>
         /// <param name="claimStore">The claim store.</param>
         /// <param name="user">The user.</param>
         /// <param name="tenantId">The tenant identifier.</param>
         /// <param name="policyName">Name of the policy.</param>
         /// <returns></returns>
-        public static async Task<IdentityResult> DetachPolicyAsync<TUser, TKey>(this UserManager<TUser> userManager, IMultiTenantUserClaimStore<TUser, TKey> claimStore, TUser user, TKey tenantId, string policyName) where TUser : class
+        public static async Task<IdentityResult> DetachPolicyAsync<TUser, TTenantKey>(this UserManager<TUser> userManager, IMultiTenantUserClaimStore<TUser, TTenantKey> claimStore, TUser user, TTenantKey tenantId, string policyName) where TUser : class
         {
-            var ret = await userManager.DetachPoliciesAsync<TUser, TKey>(claimStore, user, tenantId, policyName);
+            var ret = await userManager.DetachPoliciesAsync<TUser, TTenantKey>(claimStore, user, tenantId, policyName);
 
             return ret;
         }
@@ -242,14 +242,14 @@ namespace IdentityFramework.Iam.Core
         /// Detaches the policies asynchronously.
         /// </summary>
         /// <typeparam name="TUser">The type of the user.</typeparam>
-        /// <typeparam name="TKey">The type of the tenant id.</typeparam>
+        /// <typeparam name="TTenantKey">The type of the tenant id.</typeparam>
         /// <param name="userManager">The user manager.</param>
         /// <param name="claimStore">The claim store.</param>
         /// <param name="user">The user.</param>
         /// <param name="tenantId">The tenant identifier.</param>
         /// <param name="policyNames">The policy names.</param>
         /// <returns></returns>
-        public static async Task<IdentityResult> DetachPoliciesAsync<TUser, TKey>(this UserManager<TUser> userManager, IMultiTenantUserClaimStore<TUser, TKey> claimStore, TUser user, TKey tenantId, params string[] policyNames) where TUser : class
+        public static async Task<IdentityResult> DetachPoliciesAsync<TUser, TTenantKey>(this UserManager<TUser> userManager, IMultiTenantUserClaimStore<TUser, TTenantKey> claimStore, TUser user, TTenantKey tenantId, params string[] policyNames) where TUser : class
         {
             IdentityResult ret = null;
 
@@ -264,13 +264,13 @@ namespace IdentityFramework.Iam.Core
         /// Gets the attached policies asynchronously.
         /// </summary>
         /// <typeparam name="TUser">The type of the user.</typeparam>
-        /// <typeparam name="TKey">The type of the tenant id.</typeparam>
+        /// <typeparam name="TTenantKey">The type of the tenant id.</typeparam>
         /// <param name="userManager">The user manager.</param>
         /// <param name="claimStore">The claim store.</param>
         /// <param name="user">The user.</param>
         /// <param name="tenantId">The tenant identifier.</param>
         /// <returns></returns>
-        public static async Task<IEnumerable<string>> GetAttachedPoliciesAsync<TUser, TKey>(this UserManager<TUser> userManager, IMultiTenantUserClaimStore<TUser, TKey> claimStore, TUser user, TKey tenantId) where TUser : class
+        public static async Task<IEnumerable<string>> GetAttachedPoliciesAsync<TUser, TTenantKey>(this UserManager<TUser> userManager, IMultiTenantUserClaimStore<TUser, TTenantKey> claimStore, TUser user, TTenantKey tenantId) where TUser : class
         {
             var ret = (await claimStore.GetClaimsAsync(user, tenantId, CancellationToken.None)).Where(x => x.Type == Constants.POLICY_CLAIM_TYPE).Select(x => x.Value);
 
@@ -281,14 +281,14 @@ namespace IdentityFramework.Iam.Core
         /// Gets all the attached policies across tenants asynchronously.
         /// </summary>
         /// <typeparam name="TUser">The type of the user.</typeparam>
-        /// <typeparam name="TKey">The type of the tenant id.</typeparam>
+        /// <typeparam name="TTenantKey">The type of the tenant id.</typeparam>
         /// <param name="userManager">The user manager.</param>
         /// <param name="claimStore">The claim store.</param>
         /// <param name="user">The user.</param>
         /// <returns>Policies grouped by tenant id</returns>
-        public static async Task<IDictionary<TKey, IList<string>>> GetAttachedPoliciesAsync<TUser, TKey>(this UserManager<TUser> userManager, IMultiTenantUserClaimStore<TUser, TKey> claimStore, TUser user) where TUser : class
+        public static async Task<IDictionary<TTenantKey, IList<string>>> GetAttachedPoliciesAsync<TUser, TTenantKey>(this UserManager<TUser> userManager, IMultiTenantUserClaimStore<TUser, TTenantKey> claimStore, TUser user) where TUser : class
         {
-            IDictionary<TKey, IList<string>> ret = new Dictionary<TKey, IList<string>>();
+            IDictionary<TTenantKey, IList<string>> ret = new Dictionary<TTenantKey, IList<string>>();
 
             var claims = await claimStore.GetClaimsAsync(user, CancellationToken.None);
 
@@ -304,13 +304,13 @@ namespace IdentityFramework.Iam.Core
         /// Gets the users attached to policy asynchronously.
         /// </summary>
         /// <typeparam name="TUser">The type of the user.</typeparam>
-        /// <typeparam name="TKey">The type of the tenant id.</typeparam>
+        /// <typeparam name="TTenantKey">The type of the tenant id.</typeparam>
         /// <param name="userManager">The user manager.</param>
         /// <param name="claimStore">The claim store.</param>
         /// <param name="policyName">Name of the policy.</param>
         /// <param name="tenantId">The tenant identifier.</param>
         /// <returns></returns>
-        public static async Task<IEnumerable<TUser>> GetUsersAttachedToPolicyAsync<TUser, TKey>(this UserManager<TUser> userManager, IMultiTenantUserClaimStore<TUser, TKey> claimStore, string policyName, TKey tenantId) where TUser : class
+        public static async Task<IEnumerable<TUser>> GetUsersAttachedToPolicyAsync<TUser, TTenantKey>(this UserManager<TUser> userManager, IMultiTenantUserClaimStore<TUser, TTenantKey> claimStore, string policyName, TTenantKey tenantId) where TUser : class
         {
             var ret = (await claimStore.GetUsersForClaimAsync(new Claim(Constants.POLICY_CLAIM_TYPE, policyName), tenantId, CancellationToken.None));
 
@@ -426,11 +426,11 @@ namespace IdentityFramework.Iam.Core
         /// <summary>
         /// Adds the IAM claims.
         /// </summary>
-        /// <typeparam name="TKey">The type of the tenant id.</typeparam>
+        /// <typeparam name="TTenantKey">The type of the tenant id.</typeparam>
         /// <param name="claimsIdentity">The claims identity.</param>
         /// <param name="roles">The roles.</param>
         /// <param name="claims">The claims.</param>
-        public static void AddIamClaims<TKey>(this ClaimsIdentity claimsIdentity, IDictionary<TKey, IList<string>> roles, IDictionary<TKey, IList<Claim>> claims)
+        public static void AddIamClaims<TTenantKey>(this ClaimsIdentity claimsIdentity, IDictionary<TTenantKey, IList<string>> roles, IDictionary<TTenantKey, IList<Claim>> claims)
         {
             foreach (var tenant in roles.Keys)
             {
@@ -471,22 +471,22 @@ namespace IdentityFramework.Iam.Core
         /// <summary>
         /// Adds the multi tenant IAM core classes to DI.
         /// </summary>
-        /// <typeparam name="TKey">The type of the tenant id.</typeparam>
+        /// <typeparam name="TTenantKey">The type of the tenant id.</typeparam>
         /// <param name="services">The services.</param>
         /// <param name="configure">The configuration.</param>
-        public static void AddMultiTenantIamCore<TKey>(this IServiceCollection services, Action<IamMultiTenantOptions> configure = null)
+        public static void AddMultiTenantIamCore<TTenantKey>(this IServiceCollection services, Action<IamMultiTenantOptions> configure = null)
         {
             var options = new IamMultiTenantOptions();
             configure?.Invoke(options);
 
             if (options.IamOptions.UseDefaultCache)
             {
-                services.AddSingleton(typeof(IMultiTenantIamProviderCache<TKey>), typeof(DefaultMultiTenantIamProviderCache<TKey>));
+                services.AddSingleton(typeof(IMultiTenantIamProviderCache<TTenantKey>), typeof(DefaultMultiTenantIamProviderCache<TTenantKey>));
             }
 
             if (options.IamTenantProviderOptions.UseDefaultTenantProvider)
             {
-                services.AddSingleton(typeof(ITenantProvider<TKey>), typeof(DefaultTenantProvider<TKey>));
+                services.AddSingleton(typeof(ITenantProvider<TTenantKey>), typeof(DefaultTenantProvider<TTenantKey>));
             }
 
             services.Configure<IamTenantProviderOptions>(act =>
@@ -495,7 +495,7 @@ namespace IdentityFramework.Iam.Core
                 act.HeaderName = options.IamTenantProviderOptions.HeaderName;
             });
 
-            services.AddSingleton<IAuthorizationPolicyProvider, IamMultiTenantAuthorizationPolicyProvider<TKey>>();
+            services.AddSingleton<IAuthorizationPolicyProvider, IamMultiTenantAuthorizationPolicyProvider<TTenantKey>>();
         }
     }
 
@@ -504,11 +504,11 @@ namespace IdentityFramework.Iam.Core
         /// <summary>
         /// Converts roleName or claim to multi tenant role name.
         /// </summary>
-        /// <typeparam name="TKey">The type of the tenant id.</typeparam>
+        /// <typeparam name="TTenantKey">The type of the tenant id.</typeparam>
         /// <param name="roleName">Name of the role.</param>
         /// <param name="tenantId">The tenant identifier.</param>
         /// <returns></returns>
-        public static string ToMultiTenantRoleName<TKey>(this string roleName, TKey tenantId)
+        public static string ToMultiTenantRoleName<TTenantKey>(this string roleName, TTenantKey tenantId)
         {
             string ret = $"{roleName}_{tenantId}";
 

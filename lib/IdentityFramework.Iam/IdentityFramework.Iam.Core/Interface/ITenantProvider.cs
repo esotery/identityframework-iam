@@ -5,9 +5,9 @@ namespace IdentityFramework.Iam.Core.Interface
     /// <summary>
     /// ITenantProvider defines an interface for getting the current tenant Id
     /// </summary>
-    /// <typeparam name="T">Type of the tenant Id (long, Guid, etc.)</typeparam>
-    public interface ITenantProvider<TKey>
+    /// <typeparam name="TTenantKey">Type of the tenant Id (long, Guid, etc.)</typeparam>
+    public interface ITenantProvider<TTenantKey>
     {
-        Task<TKey> CurrentTenantId();
+        Task<TTenantKey> CurrentTenantId();
     }
 }

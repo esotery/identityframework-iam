@@ -1,15 +1,18 @@
 ﻿using IdentityFramework.Iam.Core;
 using IdentityFramework.Iam.Core.Interface;
+using IdentityFramework.Iam.TestServer;
 using IdentityFramework.Iam.TestServer.Iam;
 using IdentityFramework.Iam.TestServer.Jwt;
 using IdentityFramework.Iam.TestServer.Models;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
@@ -28,14 +31,34 @@ namespace IdentityFramework.Iam.Test
                 {
                     config.AddInMemoryCollection(new Dictionary<string, string>()
                     {
-                        { "UseMultitenancy", "true" }
+                        { "UseMultitenancy", "true" },
+                        { "TestMode", "true" }
                     });
                 })
                 .ConfigureTestServices(services =>
                 {
-                    services.Remove(services.First(s => s.ServiceType == typeof(IIamProvider)));
-                    services.Remove(services.First(s => s.ServiceType == typeof(IIamProviderCache)));
-                    services.Remove(services.First(s => s.ServiceType == typeof(IAuthorizationPolicyProvider)));
+                    services.AddIdentity<User, Role>()
+                        .AddEntityFrameworkStores<IdentityDbContext<User, Role, long>>()
+                        .AddDefaultTokenProviders();
+
+                    services.AddAuthentication(options =>
+                    {
+                        options.DefaultAuthenticateScheme = "Bearer";
+                        options.DefaultChallengeScheme = "Bearer";
+
+                    }).AddJwtBearer(configureOptions =>
+                    {
+                        configureOptions.ClaimsIssuer = Startup.TokenValidationParameters.ValidIssuer;
+                        configureOptions.TokenValidationParameters = Startup.TokenValidationParameters;
+                        configureOptions.SaveToken = true;
+                    });
+
+                    services.AddAuthorization();
+
+                    services.AddMvc();
+
+                    services.AddDbContext<IdentityDbContext<User, Role, long>>(options =>
+                        options.UseInMemoryDatabase("test"));
 
                     services.AddMultiTenantIamCore<long>();
                     services.Add(new Microsoft.Extensions.DependencyInjection.ServiceDescriptor(typeof(IMultiTenantUserClaimStore<User, long>), 

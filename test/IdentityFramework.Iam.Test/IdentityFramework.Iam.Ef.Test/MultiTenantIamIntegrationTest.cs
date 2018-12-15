@@ -1,4 +1,6 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using IdentityFramework.Iam.TestServer;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Respawn;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
@@ -6,7 +8,7 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace IdentityFramework.Iam.Test
+namespace IdentityFramework.Iam.Ef.Test
 {
     /*
      Endpoint | Role | User | Tenant | Allowed
@@ -66,6 +68,7 @@ namespace IdentityFramework.Iam.Test
      Delete | Viewer | viewer | 1 | No
      Delete | Viewer | viewer | 2 | No
     */
+
     [TestClass]
     public class MultiTenantIamIntegrationTest : MultiTenantIntegrationTestBase
     {

@@ -3,9 +3,19 @@ image: Visual Studio 2017
 branches:
   only:
   - master
+  - development
 init:
   - cmd: git config --global core.autocrlf true
+services:
+  - mssql2017
 install:
+  - ps: $urlCurrent = "https://dotnetcli.blob.core.windows.net/dotnet/Sdk/2.2.100/dotnet-sdk-2.2.100-win-x64.zip"
+  - ps: $env:DOTNET_INSTALL_DIR = "$pwd\.dotnetsdk"
+  - ps: mkdir $env:DOTNET_INSTALL_DIR -Force | Out-Null
+  - ps: $tempFileCurrent = [System.IO.Path]::GetTempFileName()
+  - ps: (New-Object System.Net.WebClient).DownloadFile($urlCurrent, $tempFileCurrent)
+  - ps: Add-Type -AssemblyName System.IO.Compression.FileSystem; [System.IO.Compression.ZipFile]::ExtractToDirectory($tempFileCurrent, $env:DOTNET_INSTALL_DIR)
+  - ps: $env:Path = "$env:DOTNET_INSTALL_DIR;$env:Path"
 before_build:
   - cmd: dotnet --version
   - cmd: dotnet restore ./lib/IdentityFramework.Iam --verbosity m
@@ -17,5 +27,6 @@ clone_depth: 1
 test_script:
   - cmd: dotnet restore ./test/IdentityFramework.Iam.Test --verbosity m
   - cmd: dotnet test ./test/IdentityFramework.Iam.Test\IdentityFramework.Iam.Test
+  - cmd: dotnet test ./test/IdentityFramework.Iam.Test\IdentityFramework.Iam.Ef.Test
 on_finish :
 deploy: off
