@@ -10,9 +10,10 @@ using System.Threading.Tasks;
 
 namespace IdentityFramework.Iam.Test
 {
-    class DummyTenantProvider<TKey> : ITenantProvider<TKey>
+    class DummyTenantProvider<TTenantKey> : ITenantProvider<TTenantKey>
+         where TTenantKey : IEquatable<TTenantKey>
     {
-        Task<TKey> ITenantProvider<TKey>.CurrentTenantId()
+        Task<TTenantKey> ITenantProvider<TTenantKey>.CurrentTenantId()
         {
             throw new NotImplementedException();
         }

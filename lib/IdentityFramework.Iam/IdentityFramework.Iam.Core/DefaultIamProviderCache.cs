@@ -1,7 +1,6 @@
 ﻿using IdentityFramework.Iam.Core.Interface;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace IdentityFramework.Iam.Core
 {
@@ -13,11 +12,33 @@ namespace IdentityFramework.Iam.Core
     {
         private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, string>> _roles;
         private readonly ConcurrentDictionary<string, string> _claims;
+        private readonly ConcurrentDictionary<string, bool> _requireResourceIdAccess;
 
         public DefaultIamProviderCache()
         {
             _roles = new ConcurrentDictionary<string, ConcurrentDictionary<string, string>>();
             _claims = new ConcurrentDictionary<string, string>();
+            _requireResourceIdAccess = new ConcurrentDictionary<string, bool>();
+        }
+
+        public bool? IsResourceIdAccessRequired(string policyName)
+        {
+            bool? ret = null;
+
+            var returned = _requireResourceIdAccess.TryGetValue(policyName, out bool value);
+
+            if (returned)
+            {
+                ret = value;
+            }
+
+            return ret;
+        }
+
+        public void ToggleResourceIdAccess(string policyName, bool isRequired)
+        {
+            _requireResourceIdAccess.AddOrUpdate(policyName, isRequired,
+                (k, v) => { v = isRequired; return v; });
         }
 
         void IIamProviderCache.AddOrUpdateClaim(string policyName, string claimValue)

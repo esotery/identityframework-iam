@@ -60,7 +60,8 @@ namespace IdentityFramework.Iam.TestServer.Jwt
             return claimsIdentity;
         }
 
-        public ClaimsIdentity GenerateClaimsIdentity<TKey>(User user, IDictionary<TKey, IList<string>> roles, IDictionary<TKey, IList<Claim>> claims)
+        public ClaimsIdentity GenerateClaimsIdentity<TTenantKey>(User user, IDictionary<TTenantKey, IList<string>> roles, IDictionary<TTenantKey, IList<Claim>> claims)
+             where TTenantKey : IEquatable<TTenantKey>
         {
             Claim[] _claims = new[]
             {

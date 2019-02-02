@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace IdentityFramework.Iam.Core.Interface
 {
@@ -6,7 +7,7 @@ namespace IdentityFramework.Iam.Core.Interface
     /// IMultiTenantIamProviderCache defines an interface which should be implemented by in order to speed up access to multi-tenancy IAM mapping
     /// </summary>
     /// <typeparam name="TTenantKey">Type of the tenant Id (long, Guid, etc.)</typeparam>
-    public interface IMultiTenantIamProviderCache<TTenantKey>
+    public interface IMultiTenantIamProviderCache<TTenantKey> where TTenantKey : IEquatable<TTenantKey>
     {
         /// <summary>
         /// Adds the role for a policy to cache.
@@ -62,6 +63,23 @@ namespace IdentityFramework.Iam.Core.Interface
         /// <param name="tenantId">The tenant identifier.</param>
         /// <returns></returns>
         string GetClaim(string policyName, TTenantKey tenantId);
+
+        /// <summary>
+        /// Toggles resource Id access on or off.
+        /// </summary>
+        /// <param name="policyName">Name of the policy.</param>
+        /// <param name="tenantId">The tenant.</param>
+        /// <param name="isRequired">Is resource id access required or not.</param>
+        /// <returns></returns>
+        void ToggleResourceIdAccess(string policyName, TTenantKey tenantId, bool isRequired);
+
+        /// <summary>
+        /// Gets whether the resource id access is required.
+        /// </summary>
+        /// <param name="policyName">Name of the policy.</param>
+        /// <param name="tenantId">The tenant.</param>
+        /// <returns></returns>
+        bool? IsResourceIdAccessRequired(string policyName, TTenantKey tenantId);
 
         /// <summary>
         /// Determines, whether the cached values are not up to date.

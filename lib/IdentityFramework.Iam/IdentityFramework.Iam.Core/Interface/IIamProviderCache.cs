@@ -55,6 +55,21 @@ namespace IdentityFramework.Iam.Core.Interface
         string GetClaim(string policyName);
 
         /// <summary>
+        /// Toggles resource Id access on or off.
+        /// </summary>
+        /// <param name="policyName">Name of the policy.</param>
+        /// <param name="isRequired">Is resource id access required or not.</param>
+        /// <returns></returns>
+        void ToggleResourceIdAccess(string policyName, bool isRequired);
+
+        /// <summary>
+        /// Gets whether the resource id access is required.
+        /// </summary>
+        /// <param name="policyName">Name of the policy.</param>
+        /// <returns></returns>
+        bool? IsResourceIdAccessRequired(string policyName);
+
+        /// <summary>
         /// Determines, whether the cached values are not up to date.
         /// </summary>
         /// <param name="policyName">Name of the policy.</param>

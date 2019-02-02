@@ -68,6 +68,23 @@ namespace IdentityFramework.Iam.Core.Interface
         Task<string> GetRequiredClaim(string policyName, IIamProviderCache cache);
 
         /// <summary>
+        /// Toggles resource Id access on or off.
+        /// </summary>
+        /// <param name="policyName">Name of the policy.</param>
+        /// <param name="isRequired">Is resource id access required or not.</param>
+        /// <param name="cache">The cache.</param>
+        /// <returns></returns>
+        Task ToggleResourceIdAccess(string policyName, bool isRequired, IIamProviderCache cache);
+
+        /// <summary>
+        /// Gets whether the resource id access is required.
+        /// </summary>
+        /// <param name="policyName">Name of the policy.</param>
+        /// <param name="cache">The cache.</param>
+        /// <returns></returns>
+        Task<bool> IsResourceIdAccessRequired(string policyName, IIamProviderCache cache);
+
+        /// <summary>
         /// Determines, whether the cached values are not up to date.
         /// </summary>
         /// <param name="policyName">Name of the policy.</param>

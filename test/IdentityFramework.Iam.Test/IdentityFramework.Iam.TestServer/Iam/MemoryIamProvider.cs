@@ -6,6 +6,20 @@ namespace IdentityFramework.Iam.TestServer.Iam
 {
     public class MemoryIamProvider : IIamProvider
     {
+        public Task<bool> IsResourceIdAccessRequired(string policyName, IIamProviderCache cache)
+        {
+            var ret = cache.IsResourceIdAccessRequired(policyName);
+
+            return Task.FromResult(ret.GetValueOrDefault(false));
+        }
+
+        public Task ToggleResourceIdAccess(string policyName, bool isRequired, IIamProviderCache cache)
+        {
+            cache.ToggleResourceIdAccess(policyName, isRequired);
+
+            return Task.CompletedTask;
+        }
+
         Task IIamProvider.AddClaim(string policyName, string claimValue, IIamProviderCache cache)
         {
             cache.AddOrUpdateClaim(policyName, claimValue);

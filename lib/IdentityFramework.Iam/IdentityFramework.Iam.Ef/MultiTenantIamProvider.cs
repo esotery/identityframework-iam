@@ -33,6 +33,55 @@ namespace IdentityFramework.Iam.Ef
             _roleManager = roleManager ?? throw new ArgumentNullException(nameof(roleManager));
         }
 
+        public async Task<bool> IsResourceIdAccessRequired(string policyName, TTenantKey tenantId, IMultiTenantIamProviderCache<TTenantKey> cache)
+        {
+            bool? ret = cache.IsResourceIdAccessRequired(policyName, tenantId);
+
+            if (!ret.HasValue)
+            {
+                var policyId = await CreateOrGetPolicy(policyName);
+
+                var policy = await _context.IamPolicyResourceIds
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(x => x.PolicyId.Equals(policyId) && x.TenantId.Equals(tenantId));
+
+                ret = policy?.RequiresResourceIdAccess;
+
+                if (ret != null)
+                {
+                    cache.ToggleResourceIdAccess(policyName, tenantId, policy.RequiresResourceIdAccess);
+                }
+            }
+
+            return ret.GetValueOrDefault(false);
+        }
+
+        public async Task ToggleResourceIdAccess(string policyName, TTenantKey tenantId, bool isRequired, IMultiTenantIamProviderCache<TTenantKey> cache)
+        {
+            var policyId = await CreateOrGetPolicy(policyName);
+
+            var policy = await _context.IamPolicyResourceIds
+                .FirstOrDefaultAsync(x => x.Id.Equals(policyId) && x.TenantId.Equals(tenantId));
+
+            if (policy == null)
+            {
+                _context.IamPolicyResourceIds.Add(new Model.MultiTenantPolicyResourceId<TKey, TTenantKey>()
+                {
+                    PolicyId = policyId,
+                    TenantId = tenantId,
+                    RequiresResourceIdAccess = isRequired
+                });
+            }
+            else
+            {
+                policy.RequiresResourceIdAccess = isRequired;
+            }
+
+            await _context.SaveChangesAsync();
+
+            cache.ToggleResourceIdAccess(policyName, tenantId, isRequired);
+        }
+
         async Task IMultiTenantIamProvider<TTenantKey>.AddClaim(string policyName, TTenantKey tenantId, string claimValue, IMultiTenantIamProviderCache<TTenantKey> cache)
         {
             if (string.IsNullOrEmpty(cache.GetClaim(policyName, tenantId)))

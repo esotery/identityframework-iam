@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace IdentityFramework.Iam.Core.Interface
@@ -7,7 +8,7 @@ namespace IdentityFramework.Iam.Core.Interface
     /// IIamProvider defines and interface for IAM mapping between policies and roles (or claims) in multi-tenancy situation
     /// </summary>
     /// <typeparam name="TTenantKey">Type of the tenant Id (long, Guid, etc.)</typeparam>
-    public interface IMultiTenantIamProvider<TTenantKey>
+    public interface IMultiTenantIamProvider<TTenantKey> where TTenantKey : IEquatable<TTenantKey>
     {
         /// <summary>
         /// Adds the mapping between role and policy for specific tenant.
@@ -74,6 +75,25 @@ namespace IdentityFramework.Iam.Core.Interface
         /// <param name="cache">The cache.</param>
         /// <returns></returns>
         Task<string> GetRequiredClaim(string policyName, TTenantKey tenantId, IMultiTenantIamProviderCache<TTenantKey> cache);
+
+        /// <summary>
+        /// Toggles resource Id access on or off.
+        /// </summary>
+        /// <param name="policyName">Name of the policy.</param>
+        /// <param name="tenantId">The tenant.</param>
+        /// <param name="isRequired">Is resource id access required or not.</param>
+        /// <param name="cache">The cache.</param>
+        /// <returns></returns>
+        Task ToggleResourceIdAccess(string policyName, TTenantKey tenantId, bool isRequired, IMultiTenantIamProviderCache<TTenantKey> cache);
+
+        /// <summary>
+        /// Gets whether the resource id access is required.
+        /// </summary>
+        /// <param name="policyName">Name of the policy.</param>
+        /// <param name="tenantId">The tenant.</param>
+        /// <param name="cache">The cache.</param>
+        /// <returns></returns>
+        Task<bool> IsResourceIdAccessRequired(string policyName, TTenantKey tenantId, IMultiTenantIamProviderCache<TTenantKey> cache);
 
         /// <summary>
         /// Determines, whether the cached values are not up to date.

@@ -15,11 +15,12 @@ namespace IdentityFramework.Iam.Ef.Context
     /// <typeparam name="TUserClaim">The type of the user claim.</typeparam>
     /// <typeparam name="TUserRole">The type of the user role.</typeparam>
     /// <seealso cref="Microsoft.AspNetCore.Identity.EntityFrameworkCore.IdentityDbContext{TUser, TRole, TKey, TUserClaim, TUserRole, Microsoft.AspNetCore.Identity.IdentityUserLogin{TKey}, Microsoft.AspNetCore.Identity.IdentityRoleClaim{TKey}, Microsoft.AspNetCore.Identity.IdentityUserToken{TKey}}" />
-    public class IamDbContextBase<TUser, TRole, TKey, TUserClaim, TUserRole> : IdentityDbContext<TUser, TRole, TKey, TUserClaim, TUserRole, IdentityUserLogin<TKey>, IdentityRoleClaim<TKey>, IdentityUserToken<TKey>> 
+    public class IamDbContextBase<TUser, TRole, TKey, TUserClaim, TUserRole, TRoleClaim> : IdentityDbContext<TUser, TRole, TKey, TUserClaim, TUserRole, IdentityUserLogin<TKey>, TRoleClaim, IdentityUserToken<TKey>> 
         where TUser : IdentityUser<TKey> 
         where TRole : IdentityRole<TKey> 
         where TUserClaim : IdentityUserClaim<TKey> 
-        where TUserRole : IdentityUserRole<TKey> 
+        where TUserRole : IdentityUserRole<TKey>
+        where TRoleClaim : IdentityRoleClaim<TKey>
         where TKey : IEquatable<TKey>
     {
         public DbSet<Policy<TKey>> IamPolicies { get; set; }
@@ -51,7 +52,7 @@ namespace IdentityFramework.Iam.Ef.Context
         }
     }
 
-    public class IamDbContextBase<TUser, TRole, TKey> : IamDbContextBase<TUser, TRole, TKey, IdentityUserClaim<TKey>, IdentityUserRole<TKey>> 
+    public class IamDbContextBase<TUser, TRole, TKey> : IamDbContextBase<TUser, TRole, TKey, IdentityUserClaim<TKey>, IdentityUserRole<TKey>, IdentityRoleClaim<TKey>> 
         where TUser : IdentityUser<TKey> 
         where TRole : IdentityRole<TKey> 
         where TKey : IEquatable<TKey>

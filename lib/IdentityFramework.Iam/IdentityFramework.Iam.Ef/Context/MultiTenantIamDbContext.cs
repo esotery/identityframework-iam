@@ -13,7 +13,7 @@ namespace IdentityFramework.Iam.Ef.Context
     /// <typeparam name="TKey">The type of the key.</typeparam>
     /// <typeparam name="TTenantKey">The type of the tenant key.</typeparam>
     /// <seealso cref="IdentityFramework.Iam.Ef.Context.IamDbContextBase{TUser, TRole, TKey, IdentityFramework.Iam.Ef.Model.MultiTenantIdentityUserClaim{TKey, TTenantKey}, IdentityFramework.Iam.Ef.Model.MultiTenantIdentityUserRole{TKey, TTenantKey}}" />
-    public class MultiTenantIamDbContext<TUser, TRole, TKey, TTenantKey> : IamDbContextBase<TUser, TRole, TKey, MultiTenantIdentityUserClaim<TKey, TTenantKey>, MultiTenantIdentityUserRole<TKey, TTenantKey>>
+    public class MultiTenantIamDbContext<TUser, TRole, TKey, TTenantKey> : IamDbContextBase<TUser, TRole, TKey, MultiTenantIdentityUserClaim<TKey, TTenantKey>, MultiTenantIdentityUserRole<TKey, TTenantKey>, MultiTenantIdentityRoleClaim<TKey, TTenantKey>>
         where TUser : IdentityUser<TKey>
         where TRole : IdentityRole<TKey>
         where TKey : IEquatable<TKey>
@@ -21,6 +21,7 @@ namespace IdentityFramework.Iam.Ef.Context
     {
         public DbSet<MultiTenantPolicyClaim<TKey, TTenantKey>> IamPolicyClaims { get; set; }
         public DbSet<MultiTenantPolicyRole<TKey, TTenantKey>> IamPolicyRoles { get; set; }
+        public DbSet<MultiTenantPolicyResourceId<TKey, TTenantKey>> IamPolicyResourceIds { get; set; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="MultiTenantIamDbContext{TUser, TRole, TKey, TTenantKey}"/> class.
@@ -70,6 +71,13 @@ namespace IdentityFramework.Iam.Ef.Context
             {
                 action.HasKey(r => new { r.UserId, r.RoleId, r.TenantId });
                 action.ToTable<MultiTenantIdentityUserRole<TKey, TTenantKey>>("AspNetUserRoles");
+            });
+
+            builder.Ignore<MultiTenantIdentityRoleClaim<TKey, TTenantKey>>();
+            builder.Entity<MultiTenantIdentityRoleClaim<TKey, TTenantKey>>(action =>
+            {
+                action.HasKey(r => new { r.Id });
+                action.ToTable<MultiTenantIdentityRoleClaim<TKey, TTenantKey>>("AspNetRoleClaims");
             });
         }
     }

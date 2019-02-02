@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 namespace IdentityFramework.Iam.TestServer.Iam
 {
     public class MemoryMultiTenantStore<TUser, TKey, TTenantKey> : IMultiTenantUserClaimStore<TUser, TTenantKey>, IMultiTenantUserRoleStore<TUser, TTenantKey> where TUser : IdentityUser<TKey> where TKey : IEquatable<TKey>
+         where TTenantKey : IEquatable<TTenantKey>
     {
         private readonly ConcurrentDictionary<Tuple<TKey, TTenantKey>, ConcurrentDictionary<Tuple<string, string>, Claim>> _claims;
         private readonly ConcurrentDictionary<Tuple<TKey, TTenantKey>, ConcurrentDictionary<string, string>> _roles;

@@ -1,10 +1,11 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using IdentityFramework.Iam.Core.Interface;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace IdentityFramework.Iam.Core.Interface
+namespace IdentityFramework.Iam.Core
 {
     /// <summary>
     /// Default tenant provider which extracts the tenant id from header
@@ -12,6 +13,7 @@ namespace IdentityFramework.Iam.Core.Interface
     /// <typeparam name="TTenantKey">The type of the tenant key.</typeparam>
     /// <seealso cref="IdentityFramework.Iam.Core.Interface.ITenantProvider{TTenantKey}" />
     public class DefaultTenantProvider<TTenantKey> : ITenantProvider<TTenantKey>
+         where TTenantKey : IEquatable<TTenantKey>
     {
         private readonly IHttpContextAccessor _accessor;
         private readonly IamTenantProviderOptions _options;

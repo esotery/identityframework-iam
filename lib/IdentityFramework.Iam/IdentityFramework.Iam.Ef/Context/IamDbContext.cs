@@ -16,6 +16,7 @@ namespace IdentityFramework.Iam.Ef.Context
     {
         public DbSet<PolicyClaim<TKey>> IamPolicyClaims { get; set; }
         public DbSet<PolicyRole<TKey>> IamPolicyRoles { get; set; }
+        public DbSet<PolicyResourceId<TKey>> IamPolicyResourceIds { get; set; }
 
         public IamDbContext(DbContextOptions<IamDbContext<TUser, TRole, TKey>> options) : base(options)
         {

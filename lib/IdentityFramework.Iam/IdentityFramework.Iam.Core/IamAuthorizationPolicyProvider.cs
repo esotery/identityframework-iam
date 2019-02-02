@@ -40,6 +40,7 @@ namespace IdentityFramework.Iam.Core
             {
                 var iamRoles = await _iamProvider.GetRequiredRoles(policyName, _iamProviderCache);
                 var iamClaim = await _iamProvider.GetRequiredClaim(policyName, _iamProviderCache);
+                var isResourceIdAccessRequired = await _iamProvider.IsResourceIdAccessRequired(policyName, _iamProviderCache);
 
                 var builder = new AuthorizationPolicyBuilder()
                     .RequireAuthenticatedUser();
@@ -56,6 +57,11 @@ namespace IdentityFramework.Iam.Core
                 else if (!string.IsNullOrEmpty(iamClaim))
                 {
                     builder.RequireRole(iamClaim);
+                }
+
+                if (isResourceIdAccessRequired)
+                {
+                    builder.AddRequirements(new ResourceIdRequirement(policyName));
                 }
 
                 policy = builder

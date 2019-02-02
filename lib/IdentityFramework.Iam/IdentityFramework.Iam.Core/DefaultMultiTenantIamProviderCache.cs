@@ -1,15 +1,16 @@
 ﻿using IdentityFramework.Iam.Core.Interface;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 
 namespace IdentityFramework.Iam.Core
 {
-    sealed class Key<TKey>
+    sealed class Key<TTenantKey>
     {
         private readonly string _policyName;
-        private readonly TKey _tenantId;
+        private readonly TTenantKey _tenantId;
 
-        public Key(string policyName, TKey tenantId)
+        public Key(string policyName, TTenantKey tenantId)
         {
             _policyName = policyName;
             _tenantId = tenantId;
@@ -19,7 +20,7 @@ namespace IdentityFramework.Iam.Core
         {
             bool ret = false;
 
-            if (obj is Key<TKey> otherKey)
+            if (obj is Key<TTenantKey> otherKey)
             {
                 ret = _policyName.Equals(otherKey._policyName) && _tenantId.Equals(otherKey._tenantId);
             }
@@ -38,51 +39,78 @@ namespace IdentityFramework.Iam.Core
     /// <summary>
     /// Default multi-tenant IAM provider cache based on concurrent dictionary.
     /// </summary>
-    /// <typeparam name="TKey">Type of the tenant Id (long, Guid, etc.)</typeparam>
-    /// <seealso cref="IdentityFramework.Iam.Core.Interface.IMultiTenantIamProviderCache{TKey}" />
-    public class DefaultMultiTenantIamProviderCache<TKey> : IMultiTenantIamProviderCache<TKey>
+    /// <typeparam name="TTenantKey">Type of the tenant Id (long, Guid, etc.)</typeparam>
+    /// <seealso cref="IdentityFramework.Iam.Core.Interface.IMultiTenantIamProviderCache{TTenantKey}" />
+    public class DefaultMultiTenantIamProviderCache<TTenantKey> : IMultiTenantIamProviderCache<TTenantKey>
+          where TTenantKey : IEquatable<TTenantKey>
     {
-        private readonly ConcurrentDictionary<Key<TKey>, ConcurrentDictionary<string, string>> _roles;
-        private readonly ConcurrentDictionary<Key<TKey>, string> _claims;
+        private readonly ConcurrentDictionary<Key<TTenantKey>, ConcurrentDictionary<string, string>> _roles;
+        private readonly ConcurrentDictionary<Key<TTenantKey>, string> _claims;
+        private readonly ConcurrentDictionary<Key<TTenantKey>, bool> _requireResourceIdAccess;
 
         public DefaultMultiTenantIamProviderCache()
         {
-            _roles = new ConcurrentDictionary<Key<TKey>, ConcurrentDictionary<string, string>>();
-            _claims = new ConcurrentDictionary<Key<TKey>, string>();
+            _roles = new ConcurrentDictionary<Key<TTenantKey>, ConcurrentDictionary<string, string>>();
+            _claims = new ConcurrentDictionary<Key<TTenantKey>, string>();
+            _requireResourceIdAccess = new ConcurrentDictionary<Key<TTenantKey>, bool>();
         }
 
-        void IMultiTenantIamProviderCache<TKey>.AddOrUpdateClaim(string policyName, TKey tenantId, string claimValue)
+        public bool? IsResourceIdAccessRequired(string policyName, TTenantKey tenantId)
         {
-            var key = new Key<TKey>(policyName, tenantId);
+            bool? ret = null;
+
+            var key = new Key<TTenantKey>(policyName, tenantId);
+
+            var returned = _requireResourceIdAccess.TryGetValue(key, out bool value);
+
+            if (returned)
+            {
+                ret = value;
+            }
+
+            return ret;
+        }
+
+        public void ToggleResourceIdAccess(string policyName, TTenantKey tenantId, bool isRequired)
+        {
+            var key = new Key<TTenantKey>(policyName, tenantId);
+
+            _requireResourceIdAccess.AddOrUpdate(key, isRequired,
+                (k, v) => { v = isRequired; return v; });
+        }
+
+        void IMultiTenantIamProviderCache<TTenantKey>.AddOrUpdateClaim(string policyName, TTenantKey tenantId, string claimValue)
+        {
+            var key = new Key<TTenantKey>(policyName, tenantId);
 
             _claims.AddOrUpdate(key, claimValue,
                 (k, v) => { v = claimValue; return v; });
         }
 
-        void IMultiTenantIamProviderCache<TKey>.AddRole(string policyName, TKey tenantId, string roleName)
+        void IMultiTenantIamProviderCache<TTenantKey>.AddRole(string policyName, TTenantKey tenantId, string roleName)
         {
-            var key = new Key<TKey>(policyName, tenantId);
+            var key = new Key<TTenantKey>(policyName, tenantId);
 
             _roles.AddOrUpdate(key, new ConcurrentDictionary<string, string>(new List<KeyValuePair<string, string>>() { new KeyValuePair<string, string>(roleName, string.Empty) }),
                 (k, v) => { v.TryAdd(roleName, string.Empty); return v; });
         }
 
-        string IMultiTenantIamProviderCache<TKey>.GetClaim(string policyName, TKey tenantId)
+        string IMultiTenantIamProviderCache<TTenantKey>.GetClaim(string policyName, TTenantKey tenantId)
         {
             string ret = null;
 
-            var key = new Key<TKey>(policyName, tenantId);
+            var key = new Key<TTenantKey>(policyName, tenantId);
 
             _claims.TryGetValue(key, out ret);
 
             return ret;
         }
 
-        ICollection<string> IMultiTenantIamProviderCache<TKey>.GetRoles(string policyName, TKey tenantId)
+        ICollection<string> IMultiTenantIamProviderCache<TTenantKey>.GetRoles(string policyName, TTenantKey tenantId)
         {
             ICollection<string> ret = null;
 
-            var key = new Key<TKey>(policyName, tenantId);
+            var key = new Key<TTenantKey>(policyName, tenantId);
 
             var roles = new ConcurrentDictionary<string, string>();
 
@@ -98,27 +126,27 @@ namespace IdentityFramework.Iam.Core
             return ret;
         }
 
-        bool IMultiTenantIamProviderCache<TKey>.NeedsUpdate(string policyName, TKey tenantId)
+        bool IMultiTenantIamProviderCache<TTenantKey>.NeedsUpdate(string policyName, TTenantKey tenantId)
         {
-            var key = new Key<TKey>(policyName, tenantId);
+            var key = new Key<TTenantKey>(policyName, tenantId);
 
             var ret = !_roles.ContainsKey(key) && !_claims.ContainsKey(key);
 
             return ret;
         }
 
-        void IMultiTenantIamProviderCache<TKey>.RemoveClaim(string policyName, TKey tenantId)
+        void IMultiTenantIamProviderCache<TTenantKey>.RemoveClaim(string policyName, TTenantKey tenantId)
         {
-            var key = new Key<TKey>(policyName, tenantId);
+            var key = new Key<TTenantKey>(policyName, tenantId);
 
             _claims.TryRemove(key, out _);
         }
 
-        void IMultiTenantIamProviderCache<TKey>.RemoveRole(string policyName, TKey tenantId, string roleName)
+        void IMultiTenantIamProviderCache<TTenantKey>.RemoveRole(string policyName, TTenantKey tenantId, string roleName)
         {
             var roles = new ConcurrentDictionary<string, string>();
 
-            var key = new Key<TKey>(policyName, tenantId);
+            var key = new Key<TTenantKey>(policyName, tenantId);
 
             if (_roles.TryGetValue(key, out roles))
             {
@@ -126,9 +154,9 @@ namespace IdentityFramework.Iam.Core
             }
         }
 
-        void IMultiTenantIamProviderCache<TKey>.RemoveRoles(string policyName, TKey tenantId)
+        void IMultiTenantIamProviderCache<TTenantKey>.RemoveRoles(string policyName, TTenantKey tenantId)
         {
-            var key = new Key<TKey>(policyName, tenantId);
+            var key = new Key<TTenantKey>(policyName, tenantId);
 
             _roles.TryRemove(key, out _);
         }

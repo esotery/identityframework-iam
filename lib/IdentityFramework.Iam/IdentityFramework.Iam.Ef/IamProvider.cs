@@ -28,6 +28,54 @@ namespace IdentityFramework.Iam.Ef
             _roleManager = roleManager ?? throw new ArgumentNullException(nameof(roleManager));
         }
 
+        public async Task<bool> IsResourceIdAccessRequired(string policyName, IIamProviderCache cache)
+        {
+            bool? ret = cache.IsResourceIdAccessRequired(policyName);
+
+            if (!ret.HasValue)
+            {
+                var policyId = await CreateOrGetPolicy(policyName);
+
+                var policy = await _context.IamPolicyResourceIds
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(x => x.PolicyId.Equals(policyId));
+
+                ret = policy?.RequiresResourceIdAccess;
+
+                if (ret != null)
+                {
+                    cache.ToggleResourceIdAccess(policyName, policy.RequiresResourceIdAccess);
+                }
+            }
+
+            return ret.GetValueOrDefault(false);
+        }
+
+        public async Task ToggleResourceIdAccess(string policyName, bool isRequired, IIamProviderCache cache)
+        {
+            var policyId = await CreateOrGetPolicy(policyName);
+
+            var policy = await _context.IamPolicyResourceIds
+                .FirstOrDefaultAsync(x => x.Id.Equals(policyId));
+
+            if (policy == null)
+            {
+                _context.IamPolicyResourceIds.Add(new Model.PolicyResourceId<TKey>()
+                {
+                    PolicyId = policyId,
+                    RequiresResourceIdAccess = isRequired
+                });
+            }
+            else
+            {
+                policy.RequiresResourceIdAccess = isRequired;
+            }
+
+            await _context.SaveChangesAsync();
+
+            cache.ToggleResourceIdAccess(policyName, isRequired);
+        }
+
         async Task IIamProvider.AddClaim(string policyName, string claimValue, IIamProviderCache cache)
         {
             if (string.IsNullOrEmpty(cache.GetClaim(policyName)))

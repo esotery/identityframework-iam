@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -10,6 +11,7 @@ namespace IdentityFramework.Iam.Core.Interface
     /// <typeparam name="TUser">The type encapsulating a user.</typeparam>
     /// <typeparam name="TTenantKey">The type of the tenantId.</typeparam>
     public interface IMultiTenantUserRoleStore<TUser, TTenantKey> where TUser : class
+         where TTenantKey : IEquatable<TTenantKey>
     {
         /// <summary>
         /// Add the specified <paramref name="user" /> to the named role.

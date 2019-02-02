@@ -11,16 +11,18 @@ namespace IdentityFramework.Iam.Core
     /// <summary>
     /// Extends the default authorization policy provider of more dynamic and fined grained IAM capabilities
     /// </summary>
+    /// <typeparam name="TTenantKey">The type of the tenant key.</typeparam>
     /// <seealso cref="Microsoft.AspNetCore.Authorization.DefaultAuthorizationPolicyProvider" />
-    public class IamMultiTenantAuthorizationPolicyProvider<TKey> : DefaultAuthorizationPolicyProvider
+    public class IamMultiTenantAuthorizationPolicyProvider<TTenantKey> : DefaultAuthorizationPolicyProvider
+         where TTenantKey : IEquatable<TTenantKey>
     {
         private readonly AuthorizationOptions _options;
 
-        private readonly IMultiTenantIamProvider<TKey> _iamProvider;
-        private readonly IMultiTenantIamProviderCache<TKey> _iamProviderCache;
-        private readonly ITenantProvider<TKey> _tenantProvider;
+        private readonly IMultiTenantIamProvider<TTenantKey> _iamProvider;
+        private readonly IMultiTenantIamProviderCache<TTenantKey> _iamProviderCache;
+        private readonly ITenantProvider<TTenantKey> _tenantProvider;
 
-        public IamMultiTenantAuthorizationPolicyProvider(IOptions<AuthorizationOptions> options, IMultiTenantIamProvider<TKey> iamProvider, IMultiTenantIamProviderCache<TKey> iamProviderCache, ITenantProvider<TKey> tenantProvider) : base(options)
+        public IamMultiTenantAuthorizationPolicyProvider(IOptions<AuthorizationOptions> options, IMultiTenantIamProvider<TTenantKey> iamProvider, IMultiTenantIamProviderCache<TTenantKey> iamProviderCache, ITenantProvider<TTenantKey> tenantProvider) : base(options)
         {
             if (options == null)
             {
@@ -44,6 +46,7 @@ namespace IdentityFramework.Iam.Core
             {
                 var iamRoles = await _iamProvider.GetRequiredRoles(policyName, tenant, _iamProviderCache);
                 var iamClaim = await _iamProvider.GetRequiredClaim(policyName, tenant, _iamProviderCache);
+                var isResourceIdAccessRequired = await _iamProvider.IsResourceIdAccessRequired(policyName, tenant, _iamProviderCache);
 
                 var builder = new AuthorizationPolicyBuilder()
                     .RequireAuthenticatedUser();
@@ -60,6 +63,11 @@ namespace IdentityFramework.Iam.Core
                 else if (!string.IsNullOrEmpty(iamClaim))
                 {
                     builder.RequireRole(iamClaim.ToMultiTenantRoleName(tenant));
+                }
+
+                if (isResourceIdAccessRequired)
+                {
+                    builder.AddRequirements(new ResourceIdRequirement(policyName));
                 }
 
                 policy = builder

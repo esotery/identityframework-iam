@@ -53,6 +53,7 @@ namespace IdentityFramework.Iam.Ef
             services.AddDbContext<MultiTenantIamDbContext<TUser, TRole, TKey, TTenantKey>>(optionsBuilder);
             services.AddScoped(typeof(IMultiTenantUserClaimStore<TUser, TKey>), typeof(MultiTenantUserClaimStore<TUser, TRole, TKey, TTenantKey>));
             services.AddScoped(typeof(IMultiTenantUserRoleStore<TUser, TKey>), typeof(MultiTenantUserRoleStore<TUser, TRole, TKey, TTenantKey>));
+            services.AddScoped(typeof(IMultiTenantRoleClaimStore<TUser, TKey>), typeof(MultiTenantRoleClaimStore<TUser, TRole, TKey, TTenantKey>));
             services.AddSingleton(typeof(IMultiTenantIamProvider<TTenantKey>), typeof(MultiTenantIamProvider<TUser, TRole, TKey, TTenantKey>));
         }
     }
