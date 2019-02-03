@@ -8,11 +8,11 @@
     <RepositoryType>GIT</RepositoryType>
     <PackageLicenseUrl>https://github.com/esotery/identityframework-iam/blob/master/LICENSE</PackageLicenseUrl>
     <Description>Extends rather static .NET IdentityFramework Policies of fine grained IAM rules for better and more dynamic Authorization handling.</Description>
-    <Version>1.0.2</Version>
-    <AssemblyVersion>1.0.1.0</AssemblyVersion>
-    <FileVersion>1.0.1.0</FileVersion>
+    <Version>1.0.3</Version>
+    <AssemblyVersion>1.0.3.0</AssemblyVersion>
+    <FileVersion>1.0.3.0</FileVersion>
     <Authors>Jan Czopik</Authors>
-    <PackageReleaseNotes>Fixed missing extension method for removing user from a role.</PackageReleaseNotes>
+    <PackageReleaseNotes>Added resource id access.</PackageReleaseNotes>
     <PackageTags>Identity framework, IAM, Multi-tenancy</PackageTags>
   </PropertyGroup>
 
