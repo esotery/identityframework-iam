@@ -33,7 +33,7 @@ namespace IdentityFramework.Iam.Core
         protected async Task HandleRequirementAsync(AuthorizationHandlerContext context, ResourceIdRequirement requirement)
         {
             var accesibleResources = context.User.FindFirstValue($"{Constants.RESOURCE_ID_CLAIM_TYPE}:{requirement.PolicyName}");
-            var _accesibleResources = string.IsNullOrEmpty(accesibleResources) ? new string[0] : accesibleResources.Split(';');
+            var _accesibleResources = string.IsNullOrEmpty(accesibleResources) ? new string[0] : accesibleResources.Split(',');
 
             bool succeeded = false;
 

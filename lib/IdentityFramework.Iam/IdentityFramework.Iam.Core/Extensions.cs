@@ -787,10 +787,17 @@ namespace IdentityFramework.Iam.Core
         /// <param name="claimsIdentity">The claims identity.</param>
         /// <param name="roles">The roles.</param>
         /// <param name="claims">The claims.</param>
-        public static void AddIamClaims(this ClaimsIdentity claimsIdentity, IList<string> roles, IList<Claim> claims)
+        /// <param name="roleClaims">The role claims</param>
+        public static void AddIamClaims(this ClaimsIdentity claimsIdentity, IList<string> roles, IList<Claim> claims, IList<Claim> roleClaims = null)
         {
             claimsIdentity.AddClaims(roles.Select(role => new Claim(ClaimTypes.Role, role)));
             claimsIdentity.AddClaims(claims.Where(x => x.Type == Constants.POLICY_CLAIM_TYPE).Select(fakeRole => new Claim(ClaimTypes.Role, fakeRole.Value)));
+            claimsIdentity.AddClaims(claims.Where(x => x.Type.StartsWith(Constants.RESOURCE_ID_CLAIM_TYPE)).Select(resourceIds => new Claim(resourceIds.Type, resourceIds.Value)));
+
+            if (roleClaims != null)
+            {
+                claimsIdentity.AddClaims(roleClaims.Where(x => x.Type.StartsWith(Constants.RESOURCE_ID_CLAIM_TYPE)).Select(resourceIds => new Claim(resourceIds.Type, resourceIds.Value)));
+            }
         }
 
         /// <summary>
@@ -800,7 +807,8 @@ namespace IdentityFramework.Iam.Core
         /// <param name="claimsIdentity">The claims identity.</param>
         /// <param name="roles">The roles.</param>
         /// <param name="claims">The claims.</param>
-        public static void AddIamClaims<TTenantKey>(this ClaimsIdentity claimsIdentity, IDictionary<TTenantKey, IList<string>> roles, IDictionary<TTenantKey, IList<Claim>> claims)
+        /// <param name="roleClaims">The role claims</param>
+        public static void AddIamClaims<TTenantKey>(this ClaimsIdentity claimsIdentity, IDictionary<TTenantKey, IList<string>> roles, IDictionary<TTenantKey, IList<Claim>> claims, IDictionary<TTenantKey, IList<Claim>> roleClaims = null)
              where TTenantKey : IEquatable<TTenantKey>
         {
             foreach (var tenant in roles.Keys)
@@ -815,6 +823,17 @@ namespace IdentityFramework.Iam.Core
                 var _claims = claims[tenant];
 
                 claimsIdentity.AddClaims(_claims.Where(x => x.Type == Constants.POLICY_CLAIM_TYPE).Select(fakeRole => new Claim(ClaimTypes.Role, fakeRole.Value.ToMultiTenantRoleName(tenant))));
+                claimsIdentity.AddClaims(_claims.Where(x => x.Type.StartsWith(Constants.RESOURCE_ID_CLAIM_TYPE)).Select(resourceIds => new Claim(resourceIds.Type, resourceIds.Value.ToMultiTenantResourceIds(tenant))));
+            }
+
+            if (roleClaims != null)
+            {
+                foreach (var tenant in roleClaims.Keys)
+                {
+                    var _claims = claims[tenant];
+
+                    claimsIdentity.AddClaims(_claims.Where(x => x.Type.StartsWith(Constants.RESOURCE_ID_CLAIM_TYPE)).Select(resourceIds => new Claim(resourceIds.Type, resourceIds.Value.ToMultiTenantResourceIds(tenant))));
+                }
             }
         }
     }
@@ -900,7 +919,7 @@ namespace IdentityFramework.Iam.Core
 
             if (options.IamOptions.UseDefaultResourceIdAuthorizationHandler)
             {
-                services.AddSingleton(typeof(IAuthorizationHandler), typeof(DefaultResourceIdAuthorizationHandler<TResourceKey>));
+                services.AddSingleton(typeof(IAuthorizationHandler), typeof(DefaultMultiTenantResourceIdAuthorizationHandler<TTenantKey, TResourceKey>));
             }
 
             if (options.IamTenantProviderOptions.UseDefaultTenantProvider)
@@ -941,6 +960,20 @@ namespace IdentityFramework.Iam.Core
         public static string ToMultiTenantRoleName<TTenantKey>(this string roleName, TTenantKey tenantId)
         {
             string ret = $"{roleName}_{tenantId}";
+
+            return ret;
+        }
+
+        /// <summary>
+        /// Converts resource id claim to multi tenant resource id claim.
+        /// </summary>
+        /// <typeparam name="TTenantKey">The type of the tenant id.</typeparam>
+        /// <param name="resourceIds">Ids of resource user has access to.</param>
+        /// <param name="tenantId">The tenant identifier.</param>
+        /// <returns></returns>
+        public static string ToMultiTenantResourceIds<TTenantKey>(this string resourceIds, TTenantKey tenantId)
+        {
+            string ret = $"{resourceIds}_{tenantId}";
 
             return ret;
         }
