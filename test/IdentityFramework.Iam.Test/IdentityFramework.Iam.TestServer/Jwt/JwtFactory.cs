@@ -45,7 +45,7 @@ namespace IdentityFramework.Iam.TestServer.Jwt
             return encodedJwt;
         }
 
-        public ClaimsIdentity GenerateClaimsIdentity(User user, IList<string> roles, IList<Claim> claims)
+        public ClaimsIdentity GenerateClaimsIdentity(User user, IList<string> roles, IList<Claim> claims, IList<Claim> roleClaims)
         {
             Claim[] _claims = new[]
             {
@@ -55,12 +55,12 @@ namespace IdentityFramework.Iam.TestServer.Jwt
 
             ClaimsIdentity claimsIdentity = new ClaimsIdentity(_claims, "Token");
 
-            claimsIdentity.AddIamClaims(roles, claims);
+            claimsIdentity.AddIamClaims(roles, claims, roleClaims);
 
             return claimsIdentity;
         }
 
-        public ClaimsIdentity GenerateClaimsIdentity<TTenantKey>(User user, IDictionary<TTenantKey, IList<string>> roles, IDictionary<TTenantKey, IList<Claim>> claims)
+        public ClaimsIdentity GenerateClaimsIdentity<TTenantKey>(User user, IDictionary<TTenantKey, IList<string>> roles, IDictionary<TTenantKey, IList<Claim>> claims, IDictionary<TTenantKey, IList<Claim>> roleClaims)
              where TTenantKey : IEquatable<TTenantKey>
         {
             Claim[] _claims = new[]
@@ -71,7 +71,7 @@ namespace IdentityFramework.Iam.TestServer.Jwt
 
             ClaimsIdentity claimsIdentity = new ClaimsIdentity(_claims, "Token");
 
-            claimsIdentity.AddIamClaims(roles, claims);
+            claimsIdentity.AddIamClaims(roles, claims, roleClaims);
 
             return claimsIdentity;
         }

@@ -1,20 +1,20 @@
 ﻿using IdentityFramework.Iam.Core;
 using IdentityFramework.Iam.Core.Interface;
-using IdentityFramework.Iam.TestServer.Iam;
+using IdentityFramework.Iam.Ef.Context;
+using IdentityFramework.Iam.Ef.Store;
 using IdentityFramework.Iam.TestServer.Models;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Collections.Generic;
+using Respawn;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace IdentityFramework.Iam.Test
+namespace IdentityFramework.Iam.Ef.Test
 {
     [TestClass]
-    public class UserManagerMultiTenantExtensionsUnitTest
+    public class UserManagerMultiTenantExtensionsIntegrationTest
     {
         IMultiTenantUserClaimStore<User, long> claimStore;
         IMultiTenantUserRoleStore<User, long> roleStore;
@@ -25,13 +25,15 @@ namespace IdentityFramework.Iam.Test
         [TestInitialize]
         public void Init()
         {
+            var connectionString = ConfigurationHelper.GetConnectionString(true);
+
             var services = new ServiceCollection();
 
-            services.AddTransient(typeof(IMultiTenantUserClaimStore<User, long>), typeof(MemoryMultiTenantStore<User, Role, long, long>));
-            services.AddTransient(typeof(IMultiTenantUserRoleStore<User, long>), typeof(MemoryMultiTenantStore<User, Role, long, long>));
+            services.AddTransient(typeof(IMultiTenantUserClaimStore<User, long>), typeof(MultiTenantUserClaimStore<User, Role, long, long>));
+            services.AddTransient(typeof(IMultiTenantUserRoleStore<User, long>), typeof(MultiTenantUserRoleStore<User, Role, long, long>));
 
             var builder = services.AddIdentity<User, Role>()
-                .AddEntityFrameworkStores<IdentityDbContext<User, Role, long>>()
+                .AddEntityFrameworkStores<MultiTenantIamDbContext<User, Role, long, long>>()
                 .AddDefaultTokenProviders();
 
             services.AddAuthentication(options =>
@@ -45,14 +47,35 @@ namespace IdentityFramework.Iam.Test
 
             services.AddMultiTenantIamCore<long>();
 
-            services.AddDbContext<IdentityDbContext<User, Role, long>>(options =>
-                options.UseInMemoryDatabase("test"));
+            services.AddDbContext<MultiTenantIamDbContext<User, Role, long, long>>(options =>
+                options.UseSqlServer(connectionString));
 
             serviceProvider = services.BuildServiceProvider();
+
+            using (var scope = serviceProvider.CreateScope())
+            {
+                var dbContext = scope.ServiceProvider.GetRequiredService(typeof(MultiTenantIamDbContext<User, Role, long, long>)) as MultiTenantIamDbContext<User, Role, long, long>;
+
+                dbContext.Database.EnsureCreated();
+
+                new Checkpoint().Reset(connectionString).Wait();
+            }
 
             userManager = serviceProvider.GetRequiredService(typeof(UserManager<User>)) as UserManager<User>;
             claimStore = serviceProvider.GetRequiredService(typeof(IMultiTenantUserClaimStore<User, long>)) as IMultiTenantUserClaimStore<User, long>;
             roleStore = serviceProvider.GetRequiredService(typeof(IMultiTenantUserRoleStore<User, long>)) as IMultiTenantUserRoleStore<User, long>;
+
+            var roleManager = serviceProvider.GetRequiredService(typeof(RoleManager<Role>)) as RoleManager<Role>;
+
+            roleManager.CreateAsync(new Role()
+            {
+                Name = "admin"
+            }).Wait();
+
+            roleManager.CreateAsync(new Role()
+            {
+                Name = "manager"
+            }).Wait();
 
             userManager.CreateAsync(new User()
             {
@@ -144,47 +167,6 @@ namespace IdentityFramework.Iam.Test
 
             Assert.IsNotNull(GetUserManager().GetUsersInRoleAsync(roleStore, "admin", 1).Result.FirstOrDefault(x => x.Id == user.Id));
             Assert.IsNotNull(GetUserManager().GetUsersInRoleAsync(roleStore, "manager", 1).Result.FirstOrDefault(x => x.Id == user.Id));
-        }
-
-        [TestMethod]
-        public async Task GrantAccessToResourcesTest()
-        {
-            await GetUserManager().GrantAccessToResources<User, long, long>(claimStore, user, 1, "resource:operation", 1, 2, 3);
-
-            Assert.AreEqual(new List<long>() { 1, 2, 3 }.Count, (await GetUserManager().GetAccessibleResources<User, long, long>(claimStore, user, 1, "resource:operation")).ResourceIds.Count);
-            Assert.IsFalse((await GetUserManager().GetAccessibleResources<User, long, long>(claimStore, user, 1, "resource:operation")).HasAccessToAllResources);
-        }
-
-        [TestMethod]
-        public async Task GrantAccessToAllResourcesTest()
-        {
-            await GetUserManager().GrantAccessToAllResources<User, long>(claimStore, user, 1, "resource:operation");
-
-            Assert.AreEqual(new List<long>() { }.Count, (await GetUserManager().GetAccessibleResources<User, long, long>(claimStore, user, 1, "resource:operation")).ResourceIds.Count);
-            Assert.IsTrue((await GetUserManager().GetAccessibleResources<User, long, long>(claimStore, user, 1, "resource:operation")).HasAccessToAllResources);
-        }
-
-        [TestMethod]
-        public async Task RevokeAccessToAllResourcesTest()
-        {
-            await GetUserManager().GrantAccessToAllResources<User, long>(claimStore, user, 1, "resource:operation");
-
-            Assert.AreEqual(new List<long>() { }.Count, (await GetUserManager().GetAccessibleResources<User, long, long>(claimStore, user, 1, "resource:operation")).ResourceIds.Count);
-            Assert.IsTrue((await GetUserManager().GetAccessibleResources<User, long, long>(claimStore, user, 1, "resource:operation")).HasAccessToAllResources);
-
-            await GetUserManager().RevokeAccessToAllResources<User, long>(claimStore, user, 1, "resource:operation");
-
-            Assert.AreEqual(new List<long>() { }.Count, (await GetUserManager().GetAccessibleResources<User, long, long>(claimStore, user, 1, "resource:operation")).ResourceIds.Count);
-            Assert.IsFalse((await GetUserManager().GetAccessibleResources<User, long, long>(claimStore, user, 1, "resource:operation")).HasAccessToAllResources);
-        }
-
-        [TestMethod]
-        public async Task GetAccessibleResourcesTest()
-        {
-            await GetUserManager().GrantAccessToResources<User, long, long>(claimStore, user, 1, "resource:operation", 1, 2, 3);
-
-            Assert.AreEqual("1,2,3", string.Join(',', (await GetUserManager().GetAccessibleResources<User, long, long>(claimStore, user, 1, "resource:operation")).ResourceIds));
-            Assert.IsFalse((await GetUserManager().GetAccessibleResources<User, long, long>(claimStore, user, 1, "resource:operation")).HasAccessToAllResources);
         }
 
         [TestMethod]

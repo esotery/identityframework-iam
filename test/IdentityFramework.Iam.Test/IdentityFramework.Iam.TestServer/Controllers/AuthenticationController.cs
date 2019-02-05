@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
@@ -23,6 +25,7 @@ namespace IdentityFramework.Iam.TestServer.Controllers
         [AllowAnonymous]
         public async Task<JwtToken> Login([FromBody]Login credentials, 
             [FromServices]SignInManager<User> signInManager,
+            [FromServices]RoleManager<Role> roleManager,
             [FromServices]IJwtFactory jwtFactory, 
             [FromServices]IOptions<JwtIssuerOptions> jwtOptions,
             [FromServices]IOptions<ServerOptions> serverOptions,
@@ -44,12 +47,44 @@ namespace IdentityFramework.Iam.TestServer.Controllers
                     {
                         var claimStore = scope.ServiceProvider.GetRequiredService<IMultiTenantUserClaimStore<User, long>>();
                         var roleStore = scope.ServiceProvider.GetRequiredService<IMultiTenantUserRoleStore<User, long>>();
-                        identity = jwtFactory.GenerateClaimsIdentity(user, await roleStore.GetRolesAsync(user, CancellationToken.None), await claimStore.GetClaimsAsync(user, CancellationToken.None));
+                        var roleClaimStore = scope.ServiceProvider.GetRequiredService<IMultiTenantRoleClaimStore<Role, long>>();
+
+                        var roles = await roleStore.GetRolesAsync(user, CancellationToken.None);
+
+                        var roleClaims = new Dictionary<long, IList<Claim>>();
+
+                        foreach (var rolePair in roles)
+                        {
+                            roleClaims.Add(rolePair.Key, new List<Claim>());
+                            foreach (var role in rolePair.Value)
+                            {
+                                var _role = await roleManager.FindByNameAsync(role);
+
+                                var claims = await roleClaimStore.GetClaimsAsync(_role, rolePair.Key, CancellationToken.None);
+
+                                foreach (var claim in claims)
+                                { 
+                                    roleClaims[rolePair.Key].Add(claim);
+                                }
+                            }
+                        }
+
+                        identity = jwtFactory.GenerateClaimsIdentity(user, roles, await claimStore.GetClaimsAsync(user, CancellationToken.None), roleClaims);
                     }
                 }
                 else
                 {
-                    identity = jwtFactory.GenerateClaimsIdentity(user, await signInManager.UserManager.GetRolesAsync(user), await signInManager.UserManager.GetClaimsAsync(user));
+                    var roles = await signInManager.UserManager.GetRolesAsync(user);
+
+                    var roleClaims = new List<Claim>();
+
+                    foreach (var role in roles)
+                    {
+                        var _role = await roleManager.FindByNameAsync(role);
+                        roleClaims.AddRange(await roleManager.GetClaimsAsync(_role));
+                    }
+
+                    identity = jwtFactory.GenerateClaimsIdentity(user, roles, await signInManager.UserManager.GetClaimsAsync(user), roleClaims);
                 }
 
                 ret = await identity.GenerateJwt(jwtFactory, jwtOptions.Value, user.Id);

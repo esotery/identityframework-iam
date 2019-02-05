@@ -62,10 +62,13 @@ namespace IdentityFramework.Iam.Test
 
                     services.AddMultiTenantIamCore<long>();
                     services.Add(new Microsoft.Extensions.DependencyInjection.ServiceDescriptor(typeof(IMultiTenantUserClaimStore<User, long>), 
-                        typeof(MemoryMultiTenantStore<User, long, long>), 
+                        typeof(MemoryMultiTenantStore<User, Role, long, long>), 
                         Microsoft.Extensions.DependencyInjection.ServiceLifetime.Singleton));
                     services.Add(new Microsoft.Extensions.DependencyInjection.ServiceDescriptor(typeof(IMultiTenantUserRoleStore<User, long>),
-                        typeof(MemoryMultiTenantStore<User, long, long>),
+                        typeof(MemoryMultiTenantStore<User, Role, long, long>),
+                        Microsoft.Extensions.DependencyInjection.ServiceLifetime.Singleton));
+                    services.Add(new Microsoft.Extensions.DependencyInjection.ServiceDescriptor(typeof(IMultiTenantRoleClaimStore<Role, long>),
+                        typeof(MemoryMultiTenantStore<User, Role, long, long>),
                         Microsoft.Extensions.DependencyInjection.ServiceLifetime.Singleton));
                     services.Add(new Microsoft.Extensions.DependencyInjection.ServiceDescriptor(typeof(IMultiTenantIamProvider<long>), 
                         typeof(MemoryMultiTenantIamProvider<long>), 

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Identity;
+using System;
 using System.Collections.Generic;
 using System.Security.Claims;
 using System.Threading;
@@ -83,5 +84,13 @@ namespace IdentityFramework.Iam.Core.Interface
         /// contain the specified claim.
         /// </returns>
         Task<IList<TUser>> GetUsersForClaimAsync(Claim claim, TTenantKey tenantId, CancellationToken cancellationToken);
+
+        /// <summary>
+        /// Persists changes
+        /// </summary>
+        /// <param name="user">The user to update</param>
+        /// <param name="cancellationToken">The <see cref="T:System.Threading.CancellationToken" /> used to propagate notifications that the operation should be canceled.</param>
+        /// <returns></returns>
+        Task<IdentityResult> UpdateAsync(TUser user, CancellationToken cancellationToken);
     }
 }

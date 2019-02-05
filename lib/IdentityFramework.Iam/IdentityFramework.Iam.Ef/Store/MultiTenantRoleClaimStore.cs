@@ -108,6 +108,32 @@ namespace IdentityFramework.Iam.Ef.Store
             }
         }
 
+        async Task<IdentityResult> IMultiTenantRoleClaimStore<TRole, TTenantKey>.UpdateAsync(TRole role, CancellationToken cancellationToken)
+        {
+            IdentityResult ret = IdentityResult.Success;
+
+            if (role == null)
+            {
+                throw new ArgumentNullException(nameof(role));
+            }
+
+            _context.Attach(role);
+            role.ConcurrencyStamp = Guid.NewGuid().ToString();
+            _context.Update(role);
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+
+                ret = IdentityResult.Failed(new IdentityErrorDescriber().ConcurrencyFailure());
+            }
+
+            return ret;
+        }
+
         protected virtual MultiTenantIdentityRoleClaim<TKey, TTenantKey> CreateRoleClaim(TRole role, TTenantKey tenantId, Claim claim)
         {
             var roleClaim = new MultiTenantIdentityRoleClaim<TKey, TTenantKey> { RoleId = role.Id, TenantId = tenantId };

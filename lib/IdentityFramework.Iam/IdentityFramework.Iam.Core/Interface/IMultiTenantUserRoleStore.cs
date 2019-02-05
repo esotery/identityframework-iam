@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Identity;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -81,5 +82,13 @@ namespace IdentityFramework.Iam.Core.Interface
         /// The <see cref="T:System.Threading.Tasks.Task" /> that represents the asynchronous operation, containing a list of users who are in the named role.
         /// </returns>
         Task<IList<TUser>> GetUsersInRoleAsync(string roleName, TTenantKey tenantId, CancellationToken cancellationToken);
+
+        /// <summary>
+        /// Persists changes
+        /// </summary>
+        /// <param name="user">The user to update</param>
+        /// <param name="cancellationToken">The <see cref="T:System.Threading.CancellationToken" /> used to propagate notifications that the operation should be canceled.</param>
+        /// <returns></returns>
+        Task<IdentityResult> UpdateAsync(TUser user, CancellationToken cancellationToken);
     }
 }

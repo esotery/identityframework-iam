@@ -1,17 +1,18 @@
 ﻿using IdentityFramework.Iam.Core;
+using IdentityFramework.Iam.Ef.Context;
 using IdentityFramework.Iam.TestServer.Models;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Respawn;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace IdentityFramework.Iam.Test
+namespace IdentityFramework.Iam.Ef.Test
 {
     [TestClass]
-    public class UserManagerExtensionsUnitTest
+    public class UserManagerExtensionsIntegrationTest
     {
         UserManager<User> userManager;
         User user;
@@ -20,27 +21,37 @@ namespace IdentityFramework.Iam.Test
         [TestInitialize]
         public void Init()
         {
+            var connectionString = ConfigurationHelper.GetConnectionString();
+
             var services = new ServiceCollection();
 
             var builder = services.AddIdentity<User, Role>()
-                .AddEntityFrameworkStores<IdentityDbContext<User, Role, long>>()
+                .AddEntityFrameworkStores<IamDbContext<User, Role, long>>()
                 .AddDefaultTokenProviders();
 
             services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = "Bearer";
                 options.DefaultChallengeScheme = "Bearer";
-
             });
 
             services.AddAuthorization();
 
             services.AddIamCore();
 
-            services.AddDbContext<IdentityDbContext<User, Role, long>>(options =>
-                options.UseInMemoryDatabase("test"));
+            services.AddDbContext<IamDbContext<User, Role, long>>(options =>
+                options.UseSqlServer(connectionString));
 
             serviceProvider = services.BuildServiceProvider();
+
+            using (var scope = serviceProvider.CreateScope())
+            {
+                var dbContext = scope.ServiceProvider.GetRequiredService(typeof(IamDbContext<User, Role, long>)) as IamDbContext<User, Role, long>;
+
+                dbContext.Database.EnsureCreated();
+
+                new Checkpoint().Reset(connectionString).Wait();
+            }
 
             userManager = serviceProvider.GetRequiredService(typeof(UserManager<User>)) as UserManager<User>;
 
@@ -50,43 +61,6 @@ namespace IdentityFramework.Iam.Test
             }).Wait();
 
             user = userManager.FindByNameAsync("test").Result;
-        }
-
-        [TestMethod]
-        public async Task GrantAccessToResourcesTest()
-        {
-            await GetUserManager().GrantAccessToResources<User, long>(user, "resource:operation", 1, 2, 3);
-
-            Assert.IsNotNull(GetUserManager().GetClaimsAsync(user).Result.FirstOrDefault(x => x.Type == $"{Constants.RESOURCE_ID_CLAIM_TYPE}:resource:operation" && x.Value == "1,2,3"));
-        }
-
-        [TestMethod]
-        public async Task GrantAccessToAllResourcesTest()
-        {
-            await GetUserManager().GrantAccessToAllResources<User>(user, "resource:operation");
-
-            Assert.IsNotNull(GetUserManager().GetClaimsAsync(user).Result.FirstOrDefault(x => x.Type == $"{Constants.RESOURCE_ID_CLAIM_TYPE}:resource:operation" && x.Value == "*"));
-        }
-
-        [TestMethod]
-        public async Task RevokeAccessToAllResourcesTest()
-        {
-            await GetUserManager().GrantAccessToAllResources<User>(user, "resource:operation");
-
-            Assert.IsNotNull(GetUserManager().GetClaimsAsync(user).Result.FirstOrDefault(x => x.Type == $"{Constants.RESOURCE_ID_CLAIM_TYPE}:resource:operation" && x.Value == "*"));
-
-            await GetUserManager().RevokeAccessToAllResources<User>(user, "resource:operation");
-
-            Assert.IsNull(GetUserManager().GetClaimsAsync(user).Result.FirstOrDefault(x => x.Type == $"{Constants.RESOURCE_ID_CLAIM_TYPE}:resource:operation"));
-        }
-
-        [TestMethod]
-        public async Task GetAccessibleResourcesTest()
-        {
-            await GetUserManager().GrantAccessToResources<User, long>(user, "resource:operation", 1, 2, 3);
-
-            Assert.AreEqual("1,2,3", string.Join(',', (await GetUserManager().GetAccessibleResources<User, long>(user, "resource:operation")).ResourceIds));
-            Assert.IsFalse((await GetUserManager().GetAccessibleResources<User, long>(user, "resource:operation")).HasAccessToAllResources);
         }
 
         [TestMethod]

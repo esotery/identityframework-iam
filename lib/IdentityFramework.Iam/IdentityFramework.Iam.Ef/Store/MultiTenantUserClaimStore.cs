@@ -131,6 +131,32 @@ namespace IdentityFramework.Iam.Ef.Store
             }
         }
 
+        async Task<IdentityResult> IMultiTenantUserClaimStore<TUser, TTenantKey>.UpdateAsync(TUser user, CancellationToken cancellationToken)
+        {
+            IdentityResult ret = IdentityResult.Success;
+
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
+            _context.Attach(user);
+            user.ConcurrencyStamp = Guid.NewGuid().ToString();
+            _context.Update(user);
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+
+                ret = IdentityResult.Failed(new IdentityErrorDescriber().ConcurrencyFailure());
+            }
+
+            return ret;
+        }
+
         protected virtual MultiTenantIdentityUserClaim<TKey, TTenantKey> CreateUserClaim(TUser user, TTenantKey tenantId, Claim claim)
         {
             var userClaim = new MultiTenantIdentityUserClaim<TKey, TTenantKey> { UserId = user.Id, TenantId = tenantId };

@@ -1,8 +1,11 @@
 ﻿using IdentityFramework.Iam.Core;
 using IdentityFramework.Iam.Core.Interface;
 using IdentityFramework.Iam.TestServer.Iam;
+using IdentityFramework.Iam.TestServer.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization.Infrastructure;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
@@ -28,6 +31,7 @@ namespace IdentityFramework.Iam.Test
         public void Init()
         {
             collection = new ServiceCollection();
+            collection.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             collection.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = "Bearer";
@@ -38,109 +42,74 @@ namespace IdentityFramework.Iam.Test
             collection.AddAuthorization();
         }
 
-        [TestMethod]
-        public void AddIamCoreWithDefaultCacheTest()
-        {
-            collection.AddSingleton<IIamProvider, MemoryIamProvider>();
-            collection.AddIamCore();
-            var sp = collection.BuildServiceProvider();
-
-            Assert.AreEqual(typeof(IamAuthorizationPolicyProvider), sp.GetRequiredService<IAuthorizationPolicyProvider>().GetType());
-            Assert.AreEqual(typeof(DefaultIamProviderCache), sp.GetRequiredService<IIamProviderCache>().GetType());
-        }
-
-        [TestMethod]
-        [ExpectedException(typeof(InvalidOperationException))]
-        public void AddIamCoreWithoutDefaultCacheTest()
+        [DataTestMethod]
+        [DataRow(true, true, true, typeof(DefaultIamProviderCache), typeof(DefaultResourceProvider<long>), typeof(DefaultResourceIdAuthorizationHandler<long>))]
+        [DataRow(true, true, false, typeof(DefaultIamProviderCache), typeof(DefaultResourceProvider<long>), typeof(PassThroughAuthorizationHandler))]
+        [DataRow(true, false, false, typeof(DefaultIamProviderCache), null, typeof(PassThroughAuthorizationHandler))]
+        [DataRow(false, false, false, null, null, typeof(PassThroughAuthorizationHandler))]
+        public void AddIamCoreTest(bool useDefaultCache, bool useDefaultResourceProvider, bool useDefaultResourceIdAuthorizationHandler,
+            Type defaultCacheType, Type defaultResourceProviderType, Type defaultResourceIdAuthorizationHandler)
         {
             collection.AddSingleton<IIamProvider, MemoryIamProvider>();
             collection.AddIamCore(options =>
             {
-                options.UseDefaultCache = false;
+                options.UseDefaultCache = useDefaultCache;
+                options.UseDefaultResourceIdAuthorizationHandler = useDefaultResourceIdAuthorizationHandler;
+                options.IamResourceProviderOptions.UseDefaultResourceProvider = useDefaultResourceProvider;
             });
             var sp = collection.BuildServiceProvider();
 
-            Assert.AreEqual(typeof(IamAuthorizationPolicyProvider), sp.GetRequiredService<IAuthorizationPolicyProvider>().GetType());
-            Assert.AreEqual(typeof(DefaultIamProviderCache), sp.GetRequiredService<IIamProviderCache>().GetType());
+            if (useDefaultCache)
+            {
+                Assert.AreEqual(typeof(IamAuthorizationPolicyProvider), sp.GetRequiredService<IAuthorizationPolicyProvider>().GetType());
+            }
+            Assert.AreEqual(defaultCacheType, sp.GetService<IIamProviderCache>()?.GetType());
+            Assert.AreEqual(defaultResourceProviderType, sp.GetService<IResourceProvider<long>>()?.GetType());
+            Assert.AreEqual(defaultResourceIdAuthorizationHandler, sp.GetService<IAuthorizationHandler>()?.GetType());
+
+            if (defaultResourceProviderType != null)
+            {
+                Assert.AreEqual(Constants.DEFAULT_RESOURCE_PARAM_NAME, (sp.GetService<IResourceProvider<long>>() as DefaultResourceProvider<long>).Options.ParamName);
+            }
         }
 
-        [TestMethod]
-        public void AddMultiTenantIamCoreWithDefaultCacheDefaultTenantProviderTest()
+        [DataTestMethod]
+        [DataRow(true, true, true, true, typeof(DefaultMultiTenantIamProviderCache<long>), typeof(DefaultTenantProvider<long>), typeof(DefaultResourceProvider<long>), typeof(DefaultMultiTenantResourceIdAuthorizationHandler<long, long>))]
+        [DataRow(true, true, true, false, typeof(DefaultMultiTenantIamProviderCache<long>), typeof(DefaultTenantProvider<long>), typeof(DefaultResourceProvider<long>), typeof(PassThroughAuthorizationHandler))]
+        [DataRow(true, true, false, false, typeof(DefaultMultiTenantIamProviderCache<long>), typeof(DefaultTenantProvider<long>), null, typeof(PassThroughAuthorizationHandler))]
+        [DataRow(true, false, false, false, typeof(DefaultMultiTenantIamProviderCache<long>), null, null, typeof(PassThroughAuthorizationHandler))]
+        [DataRow(false, false, false, false, null, null, null, typeof(PassThroughAuthorizationHandler))]
+        public void AddMultiTenantIamCoreTest(bool useDefaultCache, bool useDefaultTenantProvider, bool useDefaultResourceProvider, bool useDefaultResourceIdAuthorizationHandler,
+            Type defaultCacheType, Type defaultTenantProviderType, Type defaultResourceProviderType, Type defaultResourceIdAuthorizationHandler)
         {
-            collection.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
-            collection.AddSingleton(typeof(IMultiTenantIamProvider<long>), typeof(MemoryMultiTenantIamProvider<long>));
-            collection.AddMultiTenantIamCore<long>();
-            var sp = collection.BuildServiceProvider();
-
-            Assert.AreEqual(typeof(IamMultiTenantAuthorizationPolicyProvider<long>), sp.GetRequiredService<IAuthorizationPolicyProvider>().GetType());
-            Assert.AreEqual(typeof(DefaultMultiTenantIamProviderCache<long>), sp.GetRequiredService<IMultiTenantIamProviderCache<long>>().GetType());
-
-            var tenantProvider = sp.GetRequiredService<ITenantProvider<long>>();
-
-            Assert.AreEqual(typeof(DefaultTenantProvider<long>), tenantProvider.GetType());
-
-            var _tp = tenantProvider as DefaultTenantProvider<long>;
-
-            Assert.AreEqual(Constants.DEFAULT_TENANT_HEADER, _tp.Options.HeaderName);
-        }
-
-        [TestMethod]
-        public void AddMultiTenantIamCoreWithDefaultCacheDefaultTenantProviderCustomHeaderTest()
-        {
-            collection.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             collection.AddSingleton(typeof(IMultiTenantIamProvider<long>), typeof(MemoryMultiTenantIamProvider<long>));
             collection.AddMultiTenantIamCore<long>(options =>
             {
-                options.IamTenantProviderOptions.HeaderName = "X-CustomTenantId";
+                options.IamOptions.UseDefaultCache = useDefaultCache;
+                options.IamTenantProviderOptions.UseDefaultTenantProvider = useDefaultTenantProvider;
+                options.IamOptions.UseDefaultResourceIdAuthorizationHandler = useDefaultResourceIdAuthorizationHandler;
+                options.IamOptions.IamResourceProviderOptions.UseDefaultResourceProvider = useDefaultResourceProvider;
             });
             var sp = collection.BuildServiceProvider();
 
-            Assert.AreEqual(typeof(IamMultiTenantAuthorizationPolicyProvider<long>), sp.GetRequiredService<IAuthorizationPolicyProvider>().GetType());
-            Assert.AreEqual(typeof(DefaultMultiTenantIamProviderCache<long>), sp.GetRequiredService<IMultiTenantIamProviderCache<long>>().GetType());
-
-            var tenantProvider = sp.GetRequiredService<ITenantProvider<long>>();
-
-            Assert.AreEqual(typeof(DefaultTenantProvider<long>), tenantProvider.GetType());
-
-            var _tp = tenantProvider as DefaultTenantProvider<long>;
-
-            Assert.AreEqual("X-CustomTenantId", _tp.Options.HeaderName);
-        }
-
-        [TestMethod]
-        public void AddMultiTenantIamCoreWithDefaultCacheWithoutDefaultTenantProviderTest()
-        {
-            collection.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
-            collection.AddSingleton(typeof(ITenantProvider<long>), typeof(DummyTenantProvider<long>));
-            collection.AddSingleton(typeof(IMultiTenantIamProvider<long>), typeof(MemoryMultiTenantIamProvider<long>));
-            collection.AddMultiTenantIamCore<long>(options =>
+            if (useDefaultCache && useDefaultTenantProvider)
             {
-                options.IamTenantProviderOptions.UseDefaultTenantProvider = false;
-            });
-            var sp = collection.BuildServiceProvider();
+                Assert.AreEqual(typeof(IamMultiTenantAuthorizationPolicyProvider<long>), sp.GetRequiredService<IAuthorizationPolicyProvider>().GetType());
+            }
+            Assert.AreEqual(defaultCacheType, sp.GetService<IMultiTenantIamProviderCache<long>>()?.GetType());
+            Assert.AreEqual(defaultTenantProviderType, sp.GetService<ITenantProvider<long>>()?.GetType());
+            Assert.AreEqual(defaultResourceProviderType, sp.GetService<IResourceProvider<long>>()?.GetType());
+            Assert.AreEqual(defaultResourceIdAuthorizationHandler, sp.GetService<IAuthorizationHandler>()?.GetType());
 
-            Assert.AreEqual(typeof(IamMultiTenantAuthorizationPolicyProvider<long>), sp.GetRequiredService<IAuthorizationPolicyProvider>().GetType());
-            Assert.AreEqual(typeof(DefaultMultiTenantIamProviderCache<long>), sp.GetRequiredService<IMultiTenantIamProviderCache<long>>().GetType());
-            Assert.AreNotEqual(typeof(DefaultTenantProvider<long>), sp.GetRequiredService<ITenantProvider<long>>().GetType());
-        }
-
-        [TestMethod]
-        [ExpectedException(typeof(InvalidOperationException))]
-        public void AddMultiTenantIamCoreWithoutDefaultCacheWithoutDefaultTenantProviderTest()
-        {
-            collection.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
-            collection.AddSingleton(typeof(ITenantProvider<long>), typeof(DummyTenantProvider<long>));
-            collection.AddSingleton(typeof(IMultiTenantIamProvider<long>), typeof(MemoryMultiTenantIamProvider<long>));
-            collection.AddMultiTenantIamCore<long>(options =>
+            if (defaultTenantProviderType != null)
             {
-                options.IamOptions.UseDefaultCache = false;
-                options.IamTenantProviderOptions.UseDefaultTenantProvider = false;
-            });
-            var sp = collection.BuildServiceProvider();
+                Assert.AreEqual(Constants.DEFAULT_TENANT_HEADER, (sp.GetService<ITenantProvider<long>>() as DefaultTenantProvider<long>).Options.HeaderName);
+            }
 
-            Assert.AreEqual(typeof(IamMultiTenantAuthorizationPolicyProvider<long>), sp.GetRequiredService<IAuthorizationPolicyProvider>().GetType());
-            Assert.AreEqual(typeof(DefaultMultiTenantIamProviderCache<long>), sp.GetRequiredService<IMultiTenantIamProviderCache<long>>().GetType());
-            Assert.AreNotEqual(typeof(DefaultTenantProvider<long>), sp.GetRequiredService<ITenantProvider<long>>().GetType());
+            if (defaultResourceProviderType != null)
+            {
+                Assert.AreEqual(Constants.DEFAULT_RESOURCE_PARAM_NAME, (sp.GetService<IResourceProvider<long>>() as DefaultResourceProvider<long>).Options.ParamName);
+            }
         }
     }
 }

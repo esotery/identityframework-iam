@@ -38,7 +38,7 @@ namespace IdentityFramework.Iam.Core
         {
             var resourceClaims = context.User.FindAll($"{Constants.RESOURCE_ID_CLAIM_TYPE}:{requirement.PolicyName}");
 
-            var tenantId = _tenantIdProvider.CurrentTenantId();
+            var tenantId = await _tenantIdProvider.CurrentTenantId();
 
             var accessibleResources = new string[0];
 
@@ -57,14 +57,17 @@ namespace IdentityFramework.Iam.Core
 
             if (await _resourceIdProvider.IsSpecificResourceId())
             {
-                succeeded = accessibleResources.Contains(_resourceIdProvider.CurrentResourceId().ToString());
+                succeeded = accessibleResources.Contains((await _resourceIdProvider.CurrentResourceId()).ToString()) || accessibleResources.Contains(Constants.RESOURCE_ID_WILDCARD);
             }
             else
             {
                 succeeded = accessibleResources.Contains(Constants.RESOURCE_ID_WILDCARD);
             }
 
-            context.Succeed(requirement);
+            if (succeeded)
+            {
+                context.Succeed(requirement);
+            }
         }
     }
 }

@@ -10,19 +10,24 @@ using System.Threading.Tasks;
 
 namespace IdentityFramework.Iam.TestServer.Iam
 {
-    public class MemoryMultiTenantStore<TUser, TKey, TTenantKey> : IMultiTenantUserClaimStore<TUser, TTenantKey>, IMultiTenantUserRoleStore<TUser, TTenantKey> where TUser : IdentityUser<TKey> where TKey : IEquatable<TKey>
-         where TTenantKey : IEquatable<TTenantKey>
+    public class MemoryMultiTenantStore<TUser, TRole, TKey, TTenantKey> : IMultiTenantUserClaimStore<TUser, TTenantKey>, IMultiTenantUserRoleStore<TUser, TTenantKey>, IMultiTenantRoleClaimStore<TRole, TTenantKey>
+        where TUser : IdentityUser<TKey>
+        where TRole : IdentityRole<TKey>
+        where TKey : IEquatable<TKey>
+        where TTenantKey : IEquatable<TTenantKey>
     {
         private readonly ConcurrentDictionary<Tuple<TKey, TTenantKey>, ConcurrentDictionary<Tuple<string, string>, Claim>> _claims;
         private readonly ConcurrentDictionary<Tuple<TKey, TTenantKey>, ConcurrentDictionary<string, string>> _roles;
+        private readonly ConcurrentDictionary<Tuple<TKey, TTenantKey>, ConcurrentDictionary<Tuple<string, string>, Claim>> _roleClaims;
 
         public MemoryMultiTenantStore()
         {
             _claims = new ConcurrentDictionary<Tuple<TKey, TTenantKey>, ConcurrentDictionary<Tuple<string, string>, Claim>>();
             _roles = new ConcurrentDictionary<Tuple<TKey, TTenantKey>, ConcurrentDictionary<string, string>>();
+            _roleClaims = new ConcurrentDictionary<Tuple<TKey, TTenantKey>, ConcurrentDictionary<Tuple<string, string>, Claim>>();
         }
 
-        public Task AddClaimsAsync(TUser user, TTenantKey tenantId, IEnumerable<Claim> claims, CancellationToken cancellationToken)
+        Task IMultiTenantUserClaimStore<TUser, TTenantKey>.AddClaimsAsync(TUser user, TTenantKey tenantId, IEnumerable<Claim> claims, CancellationToken cancellationToken)
         {
             var key = Tuple.Create(user.Id, tenantId);
 
@@ -35,7 +40,20 @@ namespace IdentityFramework.Iam.TestServer.Iam
             return Task.CompletedTask;
         }
 
-        public Task AddToRoleAsync(TUser user, TTenantKey tenantId, string roleName, CancellationToken cancellationToken)
+        Task IMultiTenantRoleClaimStore<TRole, TTenantKey>.AddClaimsAsync(TRole role, TTenantKey tenantId, IEnumerable<Claim> claims, CancellationToken cancellationToken)
+        {
+            var key = Tuple.Create(role.Id, tenantId);
+
+            foreach (var claim in claims)
+            {
+                _roleClaims.AddOrUpdate(key, new ConcurrentDictionary<Tuple<string, string>, Claim>(new List<KeyValuePair<Tuple<string, string>, Claim>>() { new KeyValuePair<Tuple<string, string>, Claim>(Tuple.Create(claim.Type, claim.Value), claim) }),
+                    (k, v) => { v.TryAdd(Tuple.Create(claim.Type, claim.Value), claim); return v; });
+            }
+
+            return Task.CompletedTask;
+        }
+
+        Task IMultiTenantUserRoleStore<TUser, TTenantKey>.AddToRoleAsync(TUser user, TTenantKey tenantId, string roleName, CancellationToken cancellationToken)
         {
             var key = Tuple.Create(user.Id, tenantId);
 
@@ -45,7 +63,7 @@ namespace IdentityFramework.Iam.TestServer.Iam
             return Task.CompletedTask;
         }
 
-        public Task<IList<Claim>> GetClaimsAsync(TUser user, TTenantKey tenantId, CancellationToken cancellationToken)
+        Task<IList<Claim>> IMultiTenantUserClaimStore<TUser, TTenantKey>.GetClaimsAsync(TUser user, TTenantKey tenantId, CancellationToken cancellationToken)
         {
             IList<Claim> ret = null;
 
@@ -65,7 +83,7 @@ namespace IdentityFramework.Iam.TestServer.Iam
             return Task.FromResult(ret);
         }
 
-        public Task<IDictionary<TTenantKey, IList<Claim>>> GetClaimsAsync(TUser user, CancellationToken cancellationToken)
+        Task<IDictionary<TTenantKey, IList<Claim>>> IMultiTenantUserClaimStore<TUser, TTenantKey>.GetClaimsAsync(TUser user, CancellationToken cancellationToken)
         {
             IDictionary<TTenantKey, IList<Claim>> ret = new Dictionary<TTenantKey, IList<Claim>>();
 
@@ -88,7 +106,50 @@ namespace IdentityFramework.Iam.TestServer.Iam
             return Task.FromResult(ret);
         }
 
-        public Task<IList<string>> GetRolesAsync(TUser user, TTenantKey tenantId, CancellationToken cancellationToken)
+        Task<IList<Claim>> IMultiTenantRoleClaimStore<TRole, TTenantKey>.GetClaimsAsync(TRole role, TTenantKey tenantId, CancellationToken cancellationToken)
+        {
+            IList<Claim> ret = null;
+
+            var key = Tuple.Create(role.Id, tenantId);
+
+            var claims = new ConcurrentDictionary<Tuple<string, string>, Claim>();
+
+            if (_roleClaims.TryGetValue(key, out claims))
+            {
+                ret = claims.Values.ToList();
+            }
+            else
+            {
+                ret = new List<Claim>();
+            }
+
+            return Task.FromResult(ret);
+        }
+
+        Task<IDictionary<TTenantKey, IList<Claim>>> IMultiTenantRoleClaimStore<TRole, TTenantKey>.GetClaimsAsync(TRole role, CancellationToken cancellationToken)
+        {
+            IDictionary<TTenantKey, IList<Claim>> ret = new Dictionary<TTenantKey, IList<Claim>>();
+
+            var keys = _roleClaims.Keys.Where(x => x.Item1.Equals(role.Id));
+
+            foreach (var key in keys)
+            {
+                var claims = new ConcurrentDictionary<Tuple<string, string>, Claim>();
+
+                if (_roleClaims.TryGetValue(key, out claims))
+                {
+                    ret.Add(key.Item2, claims.Values.ToList());
+                }
+                else
+                {
+                    ret.Add(key.Item2, new List<Claim>());
+                }
+            }
+
+            return Task.FromResult(ret);
+        }
+
+        Task<IList<string>> IMultiTenantUserRoleStore<TUser, TTenantKey>.GetRolesAsync(TUser user, TTenantKey tenantId, CancellationToken cancellationToken)
         {
             IList<string> ret = null;
 
@@ -108,7 +169,7 @@ namespace IdentityFramework.Iam.TestServer.Iam
             return Task.FromResult(ret);
         }
 
-        public Task<IDictionary<TTenantKey, IList<string>>> GetRolesAsync(TUser user, CancellationToken cancellationToken)
+        Task<IDictionary<TTenantKey, IList<string>>> IMultiTenantUserRoleStore<TUser, TTenantKey>.GetRolesAsync(TUser user, CancellationToken cancellationToken)
         {
             IDictionary<TTenantKey, IList<string>> ret = new Dictionary<TTenantKey, IList<string>>();
 
@@ -131,7 +192,30 @@ namespace IdentityFramework.Iam.TestServer.Iam
             return Task.FromResult(ret);
         }
 
-        public Task<IList<TUser>> GetUsersForClaimAsync(Claim claim, TTenantKey tenantId, CancellationToken cancellationToken)
+        Task<IList<TRole>> IMultiTenantRoleClaimStore<TRole, TTenantKey>.GetRolesForClaimAsync(Claim claim, TTenantKey tenantId, CancellationToken cancellationToken)
+        {
+            IList<TRole> ret = new List<TRole>();
+
+            foreach (var key in _roleClaims.Keys)
+            {
+                var claimsForKey = new ConcurrentDictionary<Tuple<string, string>, Claim>();
+
+                if (_roleClaims.TryGetValue(key, out claimsForKey))
+                {
+                    if (claimsForKey.ContainsKey(Tuple.Create(claim.Type, claim.Value)))
+                    {
+                        var role = Activator.CreateInstance<TRole>();
+                        role.Id = key.Item1;
+
+                        ret.Add(role);
+                    }
+                }
+            }
+
+            return Task.FromResult(ret);
+        }
+
+        Task<IList<TUser>> IMultiTenantUserClaimStore<TUser, TTenantKey>.GetUsersForClaimAsync(Claim claim, TTenantKey tenantId, CancellationToken cancellationToken)
         {
             IList<TUser> ret = new List<TUser>();
 
@@ -154,7 +238,7 @@ namespace IdentityFramework.Iam.TestServer.Iam
             return Task.FromResult(ret);
         }
 
-        public Task<IList<TUser>> GetUsersInRoleAsync(string roleName, TTenantKey tenantId, CancellationToken cancellationToken)
+        Task<IList<TUser>> IMultiTenantUserRoleStore<TUser, TTenantKey>.GetUsersInRoleAsync(string roleName, TTenantKey tenantId, CancellationToken cancellationToken)
         {
             IList<TUser> ret = new List<TUser>();
 
@@ -177,7 +261,7 @@ namespace IdentityFramework.Iam.TestServer.Iam
             return Task.FromResult(ret);
         }
 
-        public Task<bool> IsInRoleAsync(TUser user, TTenantKey tenantId, string roleName, CancellationToken cancellationToken)
+        Task<bool> IMultiTenantUserRoleStore<TUser, TTenantKey>.IsInRoleAsync(TUser user, TTenantKey tenantId, string roleName, CancellationToken cancellationToken)
         {
             bool ret = false;
 
@@ -193,7 +277,7 @@ namespace IdentityFramework.Iam.TestServer.Iam
             return Task.FromResult(ret);
         }
 
-        public Task RemoveClaimsAsync(TUser user, TTenantKey tenantId, IEnumerable<Claim> claims, CancellationToken cancellationToken)
+        Task IMultiTenantUserClaimStore<TUser, TTenantKey>.RemoveClaimsAsync(TUser user, TTenantKey tenantId, IEnumerable<Claim> claims, CancellationToken cancellationToken)
         {
             var key = Tuple.Create(user.Id, tenantId);
 
@@ -212,7 +296,26 @@ namespace IdentityFramework.Iam.TestServer.Iam
             return Task.CompletedTask;
         }
 
-        public Task RemoveFromRoleAsync(TUser user, TTenantKey tenantId, string roleName, CancellationToken cancellationToken)
+        Task IMultiTenantRoleClaimStore<TRole, TTenantKey>.RemoveClaimsAsync(TRole role, TTenantKey tenantId, IEnumerable<Claim> claims, CancellationToken cancellationToken)
+        {
+            var key = Tuple.Create(role.Id, tenantId);
+
+            var claimsForKey = new ConcurrentDictionary<Tuple<string, string>, Claim>();
+
+            if (_roleClaims.TryGetValue(key, out claimsForKey))
+            {
+                foreach (var claim in claims)
+                {
+                    var subKey = Tuple.Create(claim.Type, claim.Value);
+
+                    claimsForKey.TryRemove(subKey, out _);
+                }
+            }
+
+            return Task.CompletedTask;
+        }
+
+        Task IMultiTenantUserRoleStore<TUser, TTenantKey>.RemoveFromRoleAsync(TUser user, TTenantKey tenantId, string roleName, CancellationToken cancellationToken)
         {
             var key = Tuple.Create(user.Id, tenantId);
 
@@ -226,9 +329,24 @@ namespace IdentityFramework.Iam.TestServer.Iam
             return Task.CompletedTask;
         }
 
-        public Task ReplaceClaimAsync(TUser user, TTenantKey tenantId, Claim claim, Claim newClaim, CancellationToken cancellationToken)
+        Task IMultiTenantUserClaimStore<TUser, TTenantKey>.ReplaceClaimAsync(TUser user, TTenantKey tenantId, Claim claim, Claim newClaim, CancellationToken cancellationToken)
         {
             throw new NotImplementedException();
+        }
+
+        Task<IdentityResult> IMultiTenantRoleClaimStore<TRole, TTenantKey>.UpdateAsync(TRole role, CancellationToken cancellationToken)
+        {
+            return Task.FromResult(IdentityResult.Success);
+        }
+
+        Task<IdentityResult> IMultiTenantUserClaimStore<TUser, TTenantKey>.UpdateAsync(TUser user, CancellationToken cancellationToken)
+        {
+            return Task.FromResult(IdentityResult.Success);
+        }
+
+        Task<IdentityResult> IMultiTenantUserRoleStore<TUser, TTenantKey>.UpdateAsync(TUser user, CancellationToken cancellationToken)
+        {
+            return Task.FromResult(IdentityResult.Success);
         }
     }
 }

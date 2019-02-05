@@ -107,5 +107,113 @@ namespace IdentityFramework.Iam.Ef.Test
 
             Assert.AreEqual(result, response.StatusCode);
         }
+
+        [DataTestMethod]
+        [DataRow("admin.iam@iam.iam", "xyzIam345$", HttpStatusCode.OK)]
+        [DataRow("manager.iam@iam.iam", "xyzIam345$", HttpStatusCode.Forbidden)]
+        [DataRow("viewer.iam@iam.iam", "xyzIam345$", HttpStatusCode.Forbidden)]
+        [DataRow("user.iam@iam.iam", "xyzIam345$", HttpStatusCode.Forbidden)]
+        public async Task PostResourceTest(string user, string psw, HttpStatusCode result)
+        {
+            var client = _server.CreateClient();
+
+            var token = await LoginUser(client, user, psw);
+
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            var response = await client.PostAsync("api/resources", new FormUrlEncodedContent(new[]
+            {
+                new KeyValuePair<string, string>("value", "test")
+            }));
+
+            Assert.AreEqual(result, response.StatusCode);
+        }
+
+        [DataTestMethod]
+        [DataRow("admin.iam@iam.iam", "xyzIam345$", 1, HttpStatusCode.OK)]
+        [DataRow("admin.iam@iam.iam", "xyzIam345$", 2, HttpStatusCode.OK)]
+        [DataRow("manager.iam@iam.iam", "xyzIam345$", 1, HttpStatusCode.OK)]
+        [DataRow("manager.iam@iam.iam", "xyzIam345$", 2, HttpStatusCode.OK)]
+        [DataRow("viewer.iam@iam.iam", "xyzIam345$", 1, HttpStatusCode.Forbidden)]
+        [DataRow("viewer.iam@iam.iam", "xyzIam345$", 2, HttpStatusCode.Forbidden)]
+        [DataRow("user.iam@iam.iam", "xyzIam345$", 1, HttpStatusCode.Forbidden)]
+        [DataRow("user.iam@iam.iam", "xyzIam345$", 2, HttpStatusCode.OK)]
+        public async Task PutResourceTest(string user, string psw, long resourceId, HttpStatusCode result)
+        {
+            var client = _server.CreateClient();
+
+            var token = await LoginUser(client, user, psw);
+
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            var response = await client.PutAsync($"api/resources/{resourceId}", new FormUrlEncodedContent(new[]
+            {
+                new KeyValuePair<string, string>("value", "test")
+            }));
+
+            Assert.AreEqual(result, response.StatusCode);
+        }
+
+        [DataTestMethod]
+        [DataRow("admin.iam@iam.iam", "xyzIam345$", HttpStatusCode.OK)]
+        [DataRow("manager.iam@iam.iam", "xyzIam345$", HttpStatusCode.Forbidden)]
+        [DataRow("viewer.iam@iam.iam", "xyzIam345$", HttpStatusCode.Forbidden)]
+        [DataRow("user.iam@iam.iam", "xyzIam345$", HttpStatusCode.Forbidden)]
+        public async Task GetResourceListTest(string user, string psw, HttpStatusCode result)
+        {
+            var client = _server.CreateClient();
+
+            var token = await LoginUser(client, user, psw);
+
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            var response = await client.GetAsync("api/resources");
+
+            Assert.AreEqual(result, response.StatusCode);
+        }
+
+        [DataTestMethod]
+        [DataRow("admin.iam@iam.iam", "xyzIam345$", 1, HttpStatusCode.OK)]
+        [DataRow("admin.iam@iam.iam", "xyzIam345$", 2, HttpStatusCode.OK)]
+        [DataRow("manager.iam@iam.iam", "xyzIam345$", 1, HttpStatusCode.OK)]
+        [DataRow("manager.iam@iam.iam", "xyzIam345$", 2, HttpStatusCode.OK)]
+        [DataRow("viewer.iam@iam.iam", "xyzIam345$", 1, HttpStatusCode.OK)]
+        [DataRow("viewer.iam@iam.iam", "xyzIam345$", 2, HttpStatusCode.OK)]
+        [DataRow("user.iam@iam.iam", "xyzIam345$", 1, HttpStatusCode.OK)]
+        [DataRow("user.iam@iam.iam", "xyzIam345$", 2, HttpStatusCode.OK)]
+        public async Task GetResourceTest(string user, string psw, long resourceId, HttpStatusCode result)
+        {
+            var client = _server.CreateClient();
+
+            var token = await LoginUser(client, user, psw);
+
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            var response = await client.GetAsync($"api/resources/{resourceId}");
+
+            Assert.AreEqual(result, response.StatusCode);
+        }
+
+        [DataTestMethod]
+        [DataRow("admin.iam@iam.iam", "xyzIam345$", 1, HttpStatusCode.OK)]
+        [DataRow("admin.iam@iam.iam", "xyzIam345$", 2, HttpStatusCode.OK)]
+        [DataRow("manager.iam@iam.iam", "xyzIam345$", 1, HttpStatusCode.OK)]
+        [DataRow("manager.iam@iam.iam", "xyzIam345$", 2, HttpStatusCode.OK)]
+        [DataRow("viewer.iam@iam.iam", "xyzIam345$", 1, HttpStatusCode.Forbidden)]
+        [DataRow("viewer.iam@iam.iam", "xyzIam345$", 2, HttpStatusCode.Forbidden)]
+        [DataRow("user.iam@iam.iam", "xyzIam345$", 1, HttpStatusCode.Forbidden)]
+        [DataRow("user.iam@iam.iam", "xyzIam345$", 2, HttpStatusCode.OK)]
+        public async Task DeleteResourceTest(string user, string psw, long resourceId, HttpStatusCode result)
+        {
+            var client = _server.CreateClient();
+
+            var token = await LoginUser(client, user, psw);
+
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            var response = await client.DeleteAsync($"api/resources/{resourceId}");
+
+            Assert.AreEqual(result, response.StatusCode);
+        }
     }
 }

@@ -69,6 +69,14 @@ namespace IdentityFramework.Iam.TestServer
                 AddPoliciesToRoles(new string[] { "Values:GetList", "Values:Get", "Values:Post", "Values:Put" }, new string[] { "Manager" }, iamProvider, iamProviderCache);
                 AddPoliciesToRoles(new string[] { "Values:GetList", "Values:Get" }, new string[] { "User" }, iamProvider, iamProviderCache);
                 AddPoliciesToClaims(new string[] { "Values:GetList", "Values:Get" }, iamProvider, iamProviderCache);
+                
+                AddPoliciesToRoles(new string[] { "Resources:GetList", "Resources:Get", "Resources:Post", "Resources:Put", "Resources:Delete" }, new string[] { "Admin", "Manager", "User", "Viewer" }, iamProvider, iamProviderCache);
+                TogglePolicyResourceIdAccess(new string[] { "Resources:GetList", "Resources:Post", "Resources:Put", "Resources:Delete" }, iamProvider, iamProviderCache);
+                AddResourceIdAccess("Admin", new string[] { "Resources:GetList", "Resources:Post", "Resources:Put", "Resources:Delete" }, roleManager, true);
+                AddResourceIdAccess("manager.iam@iam.iam", new string[] { "Resources:GetList", "Resources:Post", "Resources:Put", "Resources:Delete" }, userManager, false, 1, 2);
+                AddResourceIdAccess("user.iam@iam.iam", new string[] { "Resources:GetList", "Resources:Post" }, userManager, false, 1);
+                AddResourceIdAccess("user.iam@iam.iam", new string[] { "Resources:Put", "Resources:Delete" }, userManager, false, 2);
+                AddResourceIdAccess("viewer.iam@iam.iam", new string[] { "Resources:GetList" }, userManager, false, 1, 2);
             }
         }
 
@@ -91,6 +99,7 @@ namespace IdentityFramework.Iam.TestServer
                 var iamProviderCache = scope.ServiceProvider.GetRequiredService<IMultiTenantIamProviderCache<long>>();
                 var claimStore = scope.ServiceProvider.GetRequiredService<IMultiTenantUserClaimStore<User, long>>();
                 var roleStore = scope.ServiceProvider.GetRequiredService<IMultiTenantUserRoleStore<User, long>>();
+                var roleClaimStore = scope.ServiceProvider.GetRequiredService<IMultiTenantRoleClaimStore<Role, long>>();
 
                 AddRoles(roleManager, "Admin", "Manager", "User", "Viewer");
 
@@ -109,6 +118,21 @@ namespace IdentityFramework.Iam.TestServer
                 AddPoliciesToRolesMt(new string[] { "Values:GetList" }, new string[] { "Manager" }, new long[] { 1, 2 }, iamProvider, iamProviderCache);
                 AddPoliciesToClaimsMt(new string[] { "Values:GetList", "Values:Get" }, 1, iamProvider, iamProviderCache);
                 AddPoliciesToClaimsMt(new string[] { "Values:GetList" }, 2, iamProvider, iamProviderCache);
+
+                AddPoliciesToRolesMt(new string[] { "Resources:GetList", "Resources:Get", "Resources:Post", "Resources:Put", "Resources:Delete" }, new string[] { "Admin", "Manager", "User", "Viewer" }, new long[] { 1, 2 }, iamProvider, iamProviderCache);
+                TogglePolicyResourceIdAccessMt(new string[] { "Resources:GetList", "Resources:Post", "Resources:Put", "Resources:Delete" }, 1, iamProvider, iamProviderCache);
+                TogglePolicyResourceIdAccessMt(new string[] { "Resources:GetList", "Resources:Post", "Resources:Put", "Resources:Delete" }, 2, iamProvider, iamProviderCache);
+                AddResourceIdAccessMt("Admin", new string[] { "Resources:GetList", "Resources:Post", "Resources:Put", "Resources:Delete" }, new long[] { 1, 2}, roleManager, roleClaimStore, true);
+                AddResourceIdAccessMt("manager.iam@iam.iam", new string[] { "Resources:GetList", "Resources:Post", "Resources:Put", "Resources:Delete" }, new long[] { 1 }, userManager, claimStore, false, 1, 2);
+                AddResourceIdAccessMt("manager.iam@iam.iam", new string[] { "Resources:GetList", "Resources:Post", "Resources:Delete" }, new long[] { 2 }, userManager, claimStore, false, 1, 2);
+                AddResourceIdAccessMt("manager.iam@iam.iam", new string[] { "Resources:GetList" }, new long[] { 2 }, userManager, claimStore, true);
+                AddResourceIdAccessMt("user.iam@iam.iam", new string[] { "Resources:GetList", "Resources:Post" }, new long[] { 1 }, userManager, claimStore, false, 1);
+                AddResourceIdAccessMt("user.iam@iam.iam", new string[] { "Resources:Put", "Resources:Delete" }, new long[] { 1 }, userManager, claimStore, false, 2);
+                AddResourceIdAccessMt("user2.iam@iam.iam", new string[] { "Resources:GetList", "Resources:Post" }, new long[] { 2 }, userManager, claimStore, false, 2);
+                AddResourceIdAccessMt("user2.iam@iam.iam", new string[] { "Resources:Put", "Resources:Delete" }, new long[] { 2 }, userManager, claimStore, false, 1);
+                AddResourceIdAccessMt("user2.iam@iam.iam", new string[] { "Resources:GetList" }, new long[] { 2 }, userManager, claimStore, true);
+                AddResourceIdAccessMt("viewer.iam@iam.iam", new string[] { "Resources:GetList" }, new long[] { 1 }, userManager, claimStore, false, 1, 2);
+                AddResourceIdAccessMt("viewer.iam@iam.iam", new string[] { "Resources:GetList" }, new long[] { 2 }, userManager, claimStore, true);
 
                 /*
                  Endpoint | Role | User | Tenant | Allowed
@@ -208,6 +232,40 @@ namespace IdentityFramework.Iam.TestServer
             }
         }
 
+        private static void AddResourceIdAccess(string userName, string[] policies, UserManager<User> userManager, bool hasAccessToAll, params long[] resourceIds)
+        {
+            var user = userManager.FindByNameAsync(userName).Result;
+
+            foreach (var policy in policies)
+            {
+                if (hasAccessToAll)
+                {
+                    userManager.GrantAccessToAllResources(user, policy).Wait();
+                }
+                else
+                {
+                    userManager.GrantAccessToResources(user, policy, resourceIds).Wait();
+                }
+            }
+        }
+
+        private static void AddResourceIdAccess(string roleName, string[] policies, RoleManager<Role> roleManager, bool hasAccessToAll, params long[] resourceIds)
+        {
+            var role = roleManager.FindByNameAsync(roleName).Result;
+
+            foreach (var policy in policies)
+            {
+                if (hasAccessToAll)
+                {
+                    roleManager.GrantAccessToAllResources(role, policy).Wait();
+                }
+                else
+                {
+                    roleManager.GrantAccessToResources(role, policy, resourceIds).Wait();
+                }
+            }
+        }
+
         private static void AddUserMt(string userName, string password, string role, long[] tenantIds, UserManager<User> userManager, IMultiTenantUserRoleStore<User, long> store)
         {
             var user = new User() { UserName = userName };
@@ -229,6 +287,46 @@ namespace IdentityFramework.Iam.TestServer
             else
             {
                 throw new Exception("Couldn't create user");
+            }
+        }
+
+        private static void AddResourceIdAccessMt(string userName, string[] policies, long[] tenantIds, UserManager<User> userManager, IMultiTenantUserClaimStore<User, long> claimStore, bool hasAccessToAll, params long[] resourceIds)
+        {
+            var user = userManager.FindByNameAsync(userName).Result;
+
+            foreach (var policy in policies)
+            {
+                foreach (var tenantId in tenantIds)
+                {
+                    if (hasAccessToAll)
+                    {
+                        userManager.GrantAccessToAllResources<User, long>(claimStore, user, tenantId, policy).Wait();
+                    }
+                    else
+                    {
+                        userManager.GrantAccessToResources<User, long, long>(claimStore, user, tenantId, policy, resourceIds).Wait();
+                    }
+                }
+            }
+        }
+
+        private static void AddResourceIdAccessMt(string roleName, string[] policies, long[] tenantIds, RoleManager<Role> roleManager, IMultiTenantRoleClaimStore<Role, long> claimStore, bool hasAccessToAll, params long[] resourceIds)
+        {
+            var role = roleManager.FindByNameAsync(roleName).Result;
+
+            foreach (var policy in policies)
+            {
+                foreach (var tenantId in tenantIds)
+                {
+                    if (hasAccessToAll)
+                    {
+                        roleManager.GrantAccessToAllResources<Role, long>(claimStore, role, tenantId, policy).Wait();
+                    }
+                    else
+                    {
+                        roleManager.GrantAccessToResources<Role, long, long>(claimStore, role, tenantId, policy, resourceIds).Wait();
+                    }
+                }
             }
         }
 
@@ -288,11 +386,27 @@ namespace IdentityFramework.Iam.TestServer
             }
         }
 
+        private static void TogglePolicyResourceIdAccess(string[] policies, IIamProvider iamProvider, IIamProviderCache iamProviderCache)
+        {
+            foreach (var policy in policies)
+            {
+                iamProvider.ToggleResourceIdAccess(policy, true, iamProviderCache).Wait();
+            }
+        }
+
         private static void AddPoliciesToClaimsMt(string[] policies, long tenantId, IMultiTenantIamProvider<long> iamProvider, IMultiTenantIamProviderCache<long> iamProviderCache)
         {
             foreach (var policy in policies)
             {
                 iamProvider.AddClaim(policy, tenantId, policy, iamProviderCache).Wait();
+            }
+        }
+
+        private static void TogglePolicyResourceIdAccessMt(string[] policies, long tenantId, IMultiTenantIamProvider<long> iamProvider, IMultiTenantIamProviderCache<long> iamProviderCache)
+        {
+            foreach (var policy in policies)
+            {
+                iamProvider.ToggleResourceIdAccess(policy, tenantId, true, iamProviderCache).Wait();
             }
         }
     }

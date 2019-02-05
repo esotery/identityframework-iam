@@ -47,7 +47,7 @@ namespace IdentityFramework.Iam.Ef
             where TRole : IdentityRole<TKey>
             where TKey : IEquatable<TKey>
         {
-            services.AddIamCore(configure);
+            services.AddIamCore<TKey>(configure);
             services.AddDbContext<IamDbContext<TUser, TRole, TKey>, TProxyContext>(optionsBuilder);
             services.AddSingleton(typeof(IIamProvider), typeof(IamProvider<TUser, TRole, TKey>));
         }
@@ -89,11 +89,11 @@ namespace IdentityFramework.Iam.Ef
             where TKey : IEquatable<TKey>
             where TTenantKey : IEquatable<TTenantKey>
         {
-            services.AddMultiTenantIamCore<TTenantKey>(configure);
+            services.AddMultiTenantIamCore<TTenantKey, TKey>(configure);
             services.AddDbContext<MultiTenantIamDbContext<TUser, TRole, TKey, TTenantKey>>(optionsBuilder);
             services.AddScoped(typeof(IMultiTenantUserClaimStore<TUser, TKey>), typeof(MultiTenantUserClaimStore<TUser, TRole, TKey, TTenantKey>));
             services.AddScoped(typeof(IMultiTenantUserRoleStore<TUser, TKey>), typeof(MultiTenantUserRoleStore<TUser, TRole, TKey, TTenantKey>));
-            services.AddScoped(typeof(IMultiTenantRoleClaimStore<TUser, TKey>), typeof(MultiTenantRoleClaimStore<TUser, TRole, TKey, TTenantKey>));
+            services.AddScoped(typeof(IMultiTenantRoleClaimStore<TRole, TKey>), typeof(MultiTenantRoleClaimStore<TUser, TRole, TKey, TTenantKey>));
             services.AddSingleton(typeof(IMultiTenantIamProvider<TTenantKey>), typeof(MultiTenantIamProvider<TUser, TRole, TKey, TTenantKey>));
         }
     }

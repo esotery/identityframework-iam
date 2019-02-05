@@ -39,14 +39,17 @@ namespace IdentityFramework.Iam.Core
 
             if (await _resourceIdProvider.IsSpecificResourceId())
             {
-                succeeded = _accesibleResources.Contains(_resourceIdProvider.CurrentResourceId().ToString());
+                succeeded = _accesibleResources.Contains((await _resourceIdProvider.CurrentResourceId()).ToString()) || _accesibleResources.Contains(Constants.RESOURCE_ID_WILDCARD);
             }
             else
             {
                 succeeded = _accesibleResources.Contains(Constants.RESOURCE_ID_WILDCARD);
             }
 
-            context.Succeed(requirement);
+            if (succeeded)
+            {
+                context.Succeed(requirement);
+            }
         }
     }
 }

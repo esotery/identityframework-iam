@@ -46,7 +46,7 @@ namespace IdentityFramework.Iam.Core
 
             await claimStore.AddClaimsAsync(user, tenantId, new List<Claim>() { new Claim($"{Constants.RESOURCE_ID_CLAIM_TYPE}:{policyName}", string.Join(",", resourceKeys)) }, CancellationToken.None);
 
-            ret = await userManager.UpdateAsync(user);
+            ret = await claimStore.UpdateAsync(user, CancellationToken.None);
 
             return ret;
         }
@@ -75,7 +75,7 @@ namespace IdentityFramework.Iam.Core
 
             await claimStore.AddClaimsAsync(user, tenantId, new List<Claim>() { new Claim($"{Constants.RESOURCE_ID_CLAIM_TYPE}:{policyName}", Constants.RESOURCE_ID_WILDCARD) }, CancellationToken.None);
 
-            ret = await userManager.UpdateAsync(user);
+            ret = await claimStore.UpdateAsync(user, CancellationToken.None);
 
             return ret;
         }
@@ -102,7 +102,46 @@ namespace IdentityFramework.Iam.Core
 
             await claimStore.RemoveClaimsAsync(user, tenantId, claims, CancellationToken.None);
 
-            ret = await userManager.UpdateAsync(user);
+            ret = await claimStore.UpdateAsync(user, CancellationToken.None);
+
+            return ret;
+        }
+
+        /// <summary>
+        /// Gets resource ids to which the user has access to
+        /// </summary>
+        /// <typeparam name="TUser">The type of the user.</typeparam>
+        /// <typeparam name="TTenantKey">The type of the tenant id.</typeparam>
+        /// <typeparam name="TResourceKey">The type of the resource id.</typeparam>
+        /// <param name="userManager">The user manager.</param>
+        /// <param name="claimStore">The claim store.</param>
+        /// <param name="user">The user.</param>
+        /// <param name="tenantId">The tenant id</param>
+        /// <param name="policyName">Name of the policy.</param>
+        /// <returns></returns>
+        public static async Task<ResourceAccess<TResourceKey>> GetAccessibleResources<TUser, TTenantKey, TResourceKey>(this UserManager<TUser> userManager, IMultiTenantUserClaimStore<TUser, TTenantKey> claimStore, TUser user, TTenantKey tenantId, string policyName) where TUser : class
+            where TTenantKey : IEquatable<TTenantKey>
+            where TResourceKey : IEquatable<TResourceKey>
+        {
+            var ret = new ResourceAccess<TResourceKey>();
+
+            var claims = await claimStore.GetClaimsAsync(user, tenantId, CancellationToken.None);
+
+            var claim = claims.FirstOrDefault(x => x.Type == $"{Constants.RESOURCE_ID_CLAIM_TYPE}:{policyName}");
+
+            if (claim != null)
+            {
+                try
+                {
+                    ret.ResourceIds = claim.Value.Split(',').Select(x => (TResourceKey)Convert.ChangeType(x, typeof(TResourceKey))).ToList();
+                }
+                catch
+                {
+
+                }
+
+                ret.HasAccessToAllResources = claim.Value.Equals(Constants.RESOURCE_ID_WILDCARD);
+            }
 
             return ret;
         }
@@ -152,7 +191,7 @@ namespace IdentityFramework.Iam.Core
                 }
             }
 
-            ret = await userManager.UpdateAsync(user);
+            ret = await roleStore.UpdateAsync(user, CancellationToken.None);
 
             return ret;
         }
@@ -202,7 +241,7 @@ namespace IdentityFramework.Iam.Core
                 }
             }
 
-            ret = await userManager.UpdateAsync(user);
+            ret = await roleStore.UpdateAsync(user, CancellationToken.None);
 
             return ret;
         }
@@ -316,7 +355,7 @@ namespace IdentityFramework.Iam.Core
 
             await claimStore.AddClaimsAsync(user, tenantId, policyNames.Select(x => new Claim(Constants.POLICY_CLAIM_TYPE, x)), CancellationToken.None);
 
-            ret = await userManager.UpdateAsync(user);
+            ret = await claimStore.UpdateAsync(user, CancellationToken.None);
 
             return ret;
         }
@@ -358,7 +397,7 @@ namespace IdentityFramework.Iam.Core
 
             await claimStore.RemoveClaimsAsync(user, tenantId, policyNames.Select(x => new Claim(Constants.POLICY_CLAIM_TYPE, x)), CancellationToken.None);
 
-            ret = await userManager.UpdateAsync(user);
+            ret = await claimStore.UpdateAsync(user, CancellationToken.None);
 
             return ret;
         }
@@ -419,6 +458,41 @@ namespace IdentityFramework.Iam.Core
              where TTenantKey : IEquatable<TTenantKey>
         {
             var ret = (await claimStore.GetUsersForClaimAsync(new Claim(Constants.POLICY_CLAIM_TYPE, policyName), tenantId, CancellationToken.None));
+
+            return ret;
+        }
+
+        /// <summary>
+        /// Gets claims asynchronously.
+        /// </summary>
+        /// <typeparam name="TUser">The type of the user.</typeparam>
+        /// <typeparam name="TTenantKey">The type of the tenant id.</typeparam>
+        /// <param name="userManager">The user manager.</param>
+        /// <param name="claimStore">The claim store.</param>
+        /// <param name="user">The user.</param>
+        /// <param name="tenantId">The tenant identifier.</param>
+        /// <returns></returns>
+        public static async Task<IList<Claim>> GetClaimsAsync<TUser, TTenantKey>(this UserManager<TUser> userManager, IMultiTenantUserClaimStore<TUser, TTenantKey> claimStore, TUser user, TTenantKey tenantId) where TUser : class
+             where TTenantKey : IEquatable<TTenantKey>
+        {
+            var ret = await claimStore.GetClaimsAsync(user, tenantId, CancellationToken.None);
+
+            return ret;
+        }
+
+        /// <summary>
+        /// Gets claims across tenants asynchronously.
+        /// </summary>
+        /// <typeparam name="TUser">The type of the user.</typeparam>
+        /// <typeparam name="TTenantKey">The type of the tenant id.</typeparam>
+        /// <param name="userManager">The user manager.</param>
+        /// <param name="claimStore">The claim store.</param>
+        /// <param name="user">The user.</param>
+        /// <returns></returns>
+        public static async Task<IDictionary<TTenantKey, IList<Claim>>> GetClaimsAsync<TUser, TTenantKey>(this UserManager<TUser> userManager, IMultiTenantUserClaimStore<TUser, TTenantKey> claimStore, TUser user) where TUser : class
+             where TTenantKey : IEquatable<TTenantKey>
+        {
+            IDictionary<TTenantKey, IList<Claim>> ret = await claimStore.GetClaimsAsync(user, CancellationToken.None);
 
             return ret;
         }
@@ -513,6 +587,42 @@ namespace IdentityFramework.Iam.Core
 
             return ret;
         }
+
+        /// <summary>
+        /// Gets resource ids to which the user has access to
+        /// </summary>
+        /// <typeparam name="TRole">The type of the role.</typeparam>
+        /// <typeparam name="TResourceKey">The type of the resource id.</typeparam>
+        /// <param name="roleManager">The role manager.</param>
+        /// <param name="user">The user.</param>
+        /// <param name="tenantId">The tenant id</param>
+        /// <param name="policyName">Name of the policy.</param>
+        /// <returns></returns>
+        public static async Task<ResourceAccess<TResourceKey>> GetAccessibleResources<TRole, TResourceKey>(this RoleManager<TRole> roleManager, TRole role, string policyName) where TRole : class
+            where TResourceKey : IEquatable<TResourceKey>
+        {
+            var ret = new ResourceAccess<TResourceKey>();
+
+            var claims = await roleManager.GetClaimsAsync(role);
+
+            var claim = claims.FirstOrDefault(x => x.Type == $"{Constants.RESOURCE_ID_CLAIM_TYPE}:{policyName}");
+
+            if (claim != null)
+            {
+                try
+                {
+                    ret.ResourceIds = claim.Value.Split(',').Select(x => (TResourceKey)Convert.ChangeType(x, typeof(TResourceKey))).ToList();
+                }
+                catch
+                {
+
+                }
+
+                ret.HasAccessToAllResources = claim.Value.Equals(Constants.RESOURCE_ID_WILDCARD);
+            }
+
+            return ret;
+        }
     }
 
     public static class RoleManagerMultiTenantExtensions
@@ -547,7 +657,7 @@ namespace IdentityFramework.Iam.Core
 
             await claimStore.AddClaimsAsync(role, tenantId, new List<Claim>() { new Claim($"{Constants.RESOURCE_ID_CLAIM_TYPE}:{policyName}", string.Join(",", resourceKeys)) }, CancellationToken.None);
 
-            ret = await roleManager.UpdateAsync(role);
+            ret = await claimStore.UpdateAsync(role, CancellationToken.None);
 
             return ret;
         }
@@ -576,7 +686,7 @@ namespace IdentityFramework.Iam.Core
 
             await claimStore.AddClaimsAsync(role, tenantId, new List<Claim>() { new Claim($"{Constants.RESOURCE_ID_CLAIM_TYPE}:{policyName}", Constants.RESOURCE_ID_WILDCARD) }, CancellationToken.None);
 
-            ret = await roleManager.UpdateAsync(role);
+            ret = await claimStore.UpdateAsync(role, CancellationToken.None);
 
             return ret;
         }
@@ -603,7 +713,64 @@ namespace IdentityFramework.Iam.Core
 
             await claimStore.RemoveClaimsAsync(role, tenantId, claims, CancellationToken.None);
 
-            ret = await roleManager.UpdateAsync(role);
+            ret = await claimStore.UpdateAsync(role, CancellationToken.None);
+
+            return ret;
+        }
+
+        /// <summary>
+        /// Gets resource ids to which the user has access to
+        /// </summary>
+        /// <typeparam name="TRole">The type of the role.</typeparam>
+        /// <typeparam name="TTenantKey">The type of the tenant id.</typeparam>
+        /// <typeparam name="TResourceKey">The type of the resource id.</typeparam>
+        /// <param name="roleManager">The role manager.</param>
+        /// <param name="claimStore">The claim store.</param>
+        /// <param name="user">The user.</param>
+        /// <param name="tenantId">The tenant id</param>
+        /// <param name="policyName">Name of the policy.</param>
+        /// <returns></returns>
+        public static async Task<ResourceAccess<TResourceKey>> GetAccessibleResources<TRole, TTenantKey, TResourceKey>(this RoleManager<TRole> roleManager, IMultiTenantRoleClaimStore<TRole, TTenantKey> claimStore, TRole role, TTenantKey tenantId, string policyName) where TRole : class
+            where TTenantKey : IEquatable<TTenantKey>
+            where TResourceKey : IEquatable<TResourceKey>
+        {
+            var ret = new ResourceAccess<TResourceKey>();
+
+            var claims = await claimStore.GetClaimsAsync(role, tenantId, CancellationToken.None);
+
+            var claim = claims.FirstOrDefault(x => x.Type == $"{Constants.RESOURCE_ID_CLAIM_TYPE}:{policyName}");
+
+            if (claim != null)
+            {
+                try
+                {
+                    ret.ResourceIds = claim.Value.Split(',').Select(x => (TResourceKey)Convert.ChangeType(x, typeof(TResourceKey))).ToList();
+                }
+                catch
+                {
+
+                }
+
+                ret.HasAccessToAllResources = claim.Value.Equals(Constants.RESOURCE_ID_WILDCARD);
+            }
+
+            return ret;
+        }
+
+        /// <summary>
+        /// Gets claims asynchronously.
+        /// </summary>
+        /// <typeparam name="TRole">The type of the role.</typeparam>
+        /// <typeparam name="TTenantKey">The type of the tenant id.</typeparam>
+        /// <param name="roleManager">The role manager.</param>
+        /// <param name="claimStore">The claim store.</param>
+        /// <param name="role">The role.</param>
+        /// <param name="tenantId">The tenant identifier.</param>
+        /// <returns></returns>
+        public static async Task<IList<Claim>> GetClaimsAsync<TRole, TTenantKey>(this RoleManager<TRole> roleManager, IMultiTenantRoleClaimStore<TRole, TTenantKey> claimStore, TRole role, TTenantKey tenantId) where TRole : class
+            where TTenantKey : IEquatable<TTenantKey>
+        {
+            var ret = await claimStore.GetClaimsAsync(role, tenantId, CancellationToken.None);
 
             return ret;
         }
@@ -686,6 +853,41 @@ namespace IdentityFramework.Iam.Core
             claims = claims.Where(x => x.Type == $"{Constants.RESOURCE_ID_CLAIM_TYPE}:{policyName}").ToList();
 
             ret = await userManager.RemoveClaimsAsync(user, claims);
+
+            return ret;
+        }
+
+        /// <summary>
+        /// Gets resource ids to which the user has access to
+        /// </summary>
+        /// <typeparam name="TUser">The type of the user.</typeparam>
+        /// <typeparam name="TResourceKey">The type of the resource id.</typeparam>
+        /// <param name="userManager">The user manager.</param>
+        /// <param name="user">The user.</param>
+        /// <param name="policyName">Name of the policy.</param>
+        /// <returns></returns>
+        public static async Task<ResourceAccess<TResourceKey>> GetAccessibleResources<TUser, TResourceKey>(this UserManager<TUser> userManager, TUser user, string policyName) where TUser : class
+            where TResourceKey : IEquatable<TResourceKey>
+        {
+            var ret = new ResourceAccess<TResourceKey>();
+
+            var claims = await userManager.GetClaimsAsync(user);
+
+            var claim = claims.FirstOrDefault(x => x.Type == $"{Constants.RESOURCE_ID_CLAIM_TYPE}:{policyName}");
+
+            if (claim != null)
+            {
+                try
+                {
+                    ret.ResourceIds = claim.Value.Split(',').Select(x => (TResourceKey)Convert.ChangeType(x, typeof(TResourceKey))).ToList();
+                }
+                catch
+                {
+
+                }
+
+                ret.HasAccessToAllResources = claim.Value.Equals(Constants.RESOURCE_ID_WILDCARD);
+            }
 
             return ret;
         }
@@ -830,7 +1032,7 @@ namespace IdentityFramework.Iam.Core
             {
                 foreach (var tenant in roleClaims.Keys)
                 {
-                    var _claims = claims[tenant];
+                    var _claims = roleClaims[tenant];
 
                     claimsIdentity.AddClaims(_claims.Where(x => x.Type.StartsWith(Constants.RESOURCE_ID_CLAIM_TYPE)).Select(resourceIds => new Claim(resourceIds.Type, resourceIds.Value.ToMultiTenantResourceIds(tenant))));
                 }
@@ -893,7 +1095,7 @@ namespace IdentityFramework.Iam.Core
         /// <param name="services">The services.</param>
         /// <param name="configure">The configuration.</param>
         public static void AddMultiTenantIamCore<TTenantKey>(this IServiceCollection services, Action<IamMultiTenantOptions> configure = null)
-             where TTenantKey : IEquatable<TTenantKey>
+            where TTenantKey : IEquatable<TTenantKey>
         {
             AddMultiTenantIamCore<TTenantKey, long>(services, configure);
         }
