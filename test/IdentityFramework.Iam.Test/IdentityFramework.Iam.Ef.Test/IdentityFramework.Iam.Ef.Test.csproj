@@ -20,7 +20,7 @@
   <Choose>
     <When Condition="'$(Configuration)' == 'Release'">
       <ItemGroup>
-        <PackageReference Include="IdentityFramework.Iam.Core" Version="1.0.3-beta" />
+        <PackageReference Include="IdentityFramework.Iam.Core" Version="1.0.3" />
       </ItemGroup>
     </When>
     <Otherwise>
