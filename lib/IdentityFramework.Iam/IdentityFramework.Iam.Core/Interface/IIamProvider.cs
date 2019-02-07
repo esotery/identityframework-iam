@@ -18,6 +18,15 @@ namespace IdentityFramework.Iam.Core.Interface
         Task AddRole(string policyName, string roleName, IIamProviderCache cache);
 
         /// <summary>
+        /// Adds the mapping between role and policies.
+        /// </summary>
+        /// <param name="policies">Names of policies.</param>
+        /// <param name="roleName">Name of the role.</param>
+        /// <param name="cache">The cache.</param>
+        /// <returns></returns>
+        Task AddRole(ICollection<string> policies, string roleName, IIamProviderCache cache);
+
+        /// <summary>
         /// Removes the mapping between role and policy.
         /// </summary>
         /// <param name="policyName">Name of the policy.</param>
@@ -25,6 +34,15 @@ namespace IdentityFramework.Iam.Core.Interface
         /// <param name="cachee">The cachee.</param>
         /// <returns></returns>
         Task RemoveRole(string policyName, string roleName, IIamProviderCache cache);
+
+        /// <summary>
+        /// Removes the mapping between role and policies.
+        /// </summary>
+        /// <param name="policies">Names of policies.</param>
+        /// <param name="roleName">Name of the role.</param>
+        /// <param name="cache">The cache.</param>
+        /// <returns></returns>
+        Task RemoveRole(ICollection<string> policies, string roleName, IIamProviderCache cache);
 
         /// <summary>
         /// Removes all mappings between role and policy.
@@ -52,12 +70,30 @@ namespace IdentityFramework.Iam.Core.Interface
         Task AddClaim(string policyName, string claimValue, IIamProviderCache cache);
 
         /// <summary>
+        /// Adds the mapping between claim and policies.
+        /// </summary>
+        /// <param name="policies">Names of policies.</param>
+        /// <param name="claimValue">The claim value.</param>
+        /// <param name="cache">The cache.</param>
+        /// <returns></returns>
+        Task AddClaim(ICollection<string> policies, string claimValue, IIamProviderCache cache);
+
+        /// <summary>
         /// Removes the mapping between claim and policy.
         /// </summary>
         /// <param name="policyName">Name of the policy.</param>
         /// <param name="cache">The cache.</param>
         /// <returns></returns>
         Task RemoveClaim(string policyName, IIamProviderCache cache);
+
+        /// <summary>
+        /// Removes the mapping between claim and policies.
+        /// </summary>
+        /// <param name="policies">Names of policies.</param>
+        /// <param name="claimValue">The claim value.</param>
+        /// <param name="cache">The cache.</param>
+        /// <returns></returns>
+        Task RemoveClaim(ICollection<string> policies, string claimValue, IIamProviderCache cache);
 
         /// <summary>
         /// Gets the required claims.

@@ -21,6 +21,16 @@ namespace IdentityFramework.Iam.Core.Interface
         Task AddRole(string policyName, TTenantKey tenantId, string roleName, IMultiTenantIamProviderCache<TTenantKey> cache);
 
         /// <summary>
+        /// Adds the mapping between role and policy for specific tenant.
+        /// </summary>
+        /// <param name="policies">Names of policies.</param>
+        /// <param name="tenantId">The tenant identifier.</param>
+        /// <param name="roleName">Name of the role.</param>
+        /// <param name="cache">The cache.</param>
+        /// <returns></returns>
+        Task AddRole(ICollection<string> policies, TTenantKey tenantId, string roleName, IMultiTenantIamProviderCache<TTenantKey> cache);
+
+        /// <summary>
         /// Removes the mapping between role and policy for specific tenant.
         /// </summary>
         /// <param name="policyName">Name of the policy.</param>
@@ -29,6 +39,16 @@ namespace IdentityFramework.Iam.Core.Interface
         /// <param name="cache">The cache.</param>
         /// <returns></returns>
         Task RemoveRole(string policyName, TTenantKey tenantId, string roleName, IMultiTenantIamProviderCache<TTenantKey> cache);
+
+        /// <summary>
+        /// Removes the mapping between role and policy for specific tenant.
+        /// </summary>
+        /// <param name="policies">Names of policies.</param>
+        /// <param name="tenantId">The tenant identifier.</param>
+        /// <param name="roleName">Name of the role.</param>
+        /// <param name="cache">The cache.</param>
+        /// <returns></returns>
+        Task RemoveRole(ICollection<string> policies, TTenantKey tenantId, string roleName, IMultiTenantIamProviderCache<TTenantKey> cache);
 
         /// <summary>
         /// Removes all mappings between role and policy for specific tenant.
@@ -59,6 +79,16 @@ namespace IdentityFramework.Iam.Core.Interface
         Task AddClaim(string policyName, TTenantKey tenantId, string claimValue, IMultiTenantIamProviderCache<TTenantKey> cache);
 
         /// <summary>
+        /// Adds the mapping between claim and policies for specific tenant.
+        /// </summary>
+        /// <param name="policies">Names of policies.</param>
+        /// <param name="tenantId">The tenant identifier.</param>
+        /// <param name="claimValue">The claim value.</param>
+        /// <param name="cache">The cache.</param>
+        /// <returns></returns>
+        Task AddClaim(ICollection<string> policies, TTenantKey tenantId, string claimValue, IMultiTenantIamProviderCache<TTenantKey> cache);
+
+        /// <summary>
         /// Removes the mapping between claim and policy for specific tenant.
         /// </summary>
         /// <param name="policyName">Name of the policy.</param>
@@ -66,6 +96,16 @@ namespace IdentityFramework.Iam.Core.Interface
         /// <param name="cache">The cache.</param>
         /// <returns></returns>
         Task RemoveClaim(string policyName, TTenantKey tenantId, IMultiTenantIamProviderCache<TTenantKey> cache);
+
+        /// <summary>
+        /// Removes the mapping between claim and policies for specific tenant.
+        /// </summary>
+        /// <param name="policies">Names of policies.</param>
+        /// <param name="tenantId">The tenant identifier.</param>
+        /// <param name="claimValue">The claim value.</param>
+        /// <param name="cache">The cache.</param>
+        /// <returns></returns>
+        Task RemoveClaim(ICollection<string> policies, TTenantKey tenantId, string claimValue, IMultiTenantIamProviderCache<TTenantKey> cache);
 
         /// <summary>
         /// Gets the required claims.
