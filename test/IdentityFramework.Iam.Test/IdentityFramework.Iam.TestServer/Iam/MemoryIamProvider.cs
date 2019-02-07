@@ -6,14 +6,14 @@ namespace IdentityFramework.Iam.TestServer.Iam
 {
     public class MemoryIamProvider : IIamProvider
     {
-        public Task<bool> IsResourceIdAccessRequired(string policyName, IIamProviderCache cache)
+        Task<bool> IIamProvider.IsResourceIdAccessRequired(string policyName, IIamProviderCache cache)
         {
             var ret = cache.IsResourceIdAccessRequired(policyName);
 
             return Task.FromResult(ret.GetValueOrDefault(false));
         }
 
-        public Task ToggleResourceIdAccess(string policyName, bool isRequired, IIamProviderCache cache)
+        Task IIamProvider.ToggleResourceIdAccess(string policyName, bool isRequired, IIamProviderCache cache)
         {
             cache.ToggleResourceIdAccess(policyName, isRequired);
 
@@ -27,9 +27,29 @@ namespace IdentityFramework.Iam.TestServer.Iam
             return Task.CompletedTask;
         }
 
+        Task IIamProvider.AddClaim(ICollection<string> policies, string claimValue, IIamProviderCache cache)
+        {
+            foreach (var policyName in policies)
+            {
+                cache.AddOrUpdateClaim(policyName, claimValue);
+            }
+
+            return Task.CompletedTask;
+        }
+
         Task IIamProvider.AddRole(string policyName, string roleName, IIamProviderCache cache)
         {
             cache.AddRole(policyName, roleName);
+
+            return Task.CompletedTask;
+        }
+
+        Task IIamProvider.AddRole(ICollection<string> policies, string roleName, IIamProviderCache cache)
+        {
+            foreach (var policyName in policies)
+            {
+                cache.AddRole(policyName, roleName);
+            }
 
             return Task.CompletedTask;
         }
@@ -62,9 +82,29 @@ namespace IdentityFramework.Iam.TestServer.Iam
             return Task.CompletedTask;
         }
 
+        Task IIamProvider.RemoveClaim(ICollection<string> policies, string claimValue, IIamProviderCache cache)
+        {
+            foreach (var policyName in policies)
+            {
+                cache.RemoveClaim(policyName);
+            }
+
+            return Task.CompletedTask;
+        }
+
         Task IIamProvider.RemoveRole(string policyName, string roleName, IIamProviderCache cache)
         {
             cache.RemoveRole(policyName, roleName);
+
+            return Task.CompletedTask;
+        }
+
+        Task IIamProvider.RemoveRole(ICollection<string> policies, string roleName, IIamProviderCache cache)
+        {
+            foreach (var policyName in policies)
+            {
+                cache.RemoveRole(policyName, roleName);
+            }
 
             return Task.CompletedTask;
         }

@@ -69,7 +69,7 @@ namespace IdentityFramework.Iam.TestServer
                 AddPoliciesToRoles(new string[] { "Values:GetList", "Values:Get", "Values:Post", "Values:Put" }, new string[] { "Manager" }, iamProvider, iamProviderCache);
                 AddPoliciesToRoles(new string[] { "Values:GetList", "Values:Get" }, new string[] { "User" }, iamProvider, iamProviderCache);
                 AddPoliciesToClaims(new string[] { "Values:GetList", "Values:Get" }, iamProvider, iamProviderCache);
-                
+
                 AddPoliciesToRoles(new string[] { "Resources:GetList", "Resources:Get", "Resources:Post", "Resources:Put", "Resources:Delete" }, new string[] { "Admin", "Manager", "User", "Viewer" }, iamProvider, iamProviderCache);
                 TogglePolicyResourceIdAccess(new string[] { "Resources:GetList", "Resources:Post", "Resources:Put", "Resources:Delete" }, iamProvider, iamProviderCache);
                 AddResourceIdAccess("Admin", new string[] { "Resources:GetList", "Resources:Post", "Resources:Put", "Resources:Delete" }, roleManager, true);
@@ -122,7 +122,7 @@ namespace IdentityFramework.Iam.TestServer
                 AddPoliciesToRolesMt(new string[] { "Resources:GetList", "Resources:Get", "Resources:Post", "Resources:Put", "Resources:Delete" }, new string[] { "Admin", "Manager", "User", "Viewer" }, new long[] { 1, 2 }, iamProvider, iamProviderCache);
                 TogglePolicyResourceIdAccessMt(new string[] { "Resources:GetList", "Resources:Post", "Resources:Put", "Resources:Delete" }, 1, iamProvider, iamProviderCache);
                 TogglePolicyResourceIdAccessMt(new string[] { "Resources:GetList", "Resources:Post", "Resources:Put", "Resources:Delete" }, 2, iamProvider, iamProviderCache);
-                AddResourceIdAccessMt("Admin", new string[] { "Resources:GetList", "Resources:Post", "Resources:Put", "Resources:Delete" }, new long[] { 1, 2}, roleManager, roleClaimStore, true);
+                AddResourceIdAccessMt("Admin", new string[] { "Resources:GetList", "Resources:Post", "Resources:Put", "Resources:Delete" }, new long[] { 1, 2 }, roleManager, roleClaimStore, true);
                 AddResourceIdAccessMt("manager.iam@iam.iam", new string[] { "Resources:GetList", "Resources:Post", "Resources:Put", "Resources:Delete" }, new long[] { 1 }, userManager, claimStore, false, 1, 2);
                 AddResourceIdAccessMt("manager.iam@iam.iam", new string[] { "Resources:GetList", "Resources:Post", "Resources:Delete" }, new long[] { 2 }, userManager, claimStore, false, 1, 2);
                 AddResourceIdAccessMt("manager.iam@iam.iam", new string[] { "Resources:GetList" }, new long[] { 2 }, userManager, claimStore, true);
@@ -355,25 +355,19 @@ namespace IdentityFramework.Iam.TestServer
 
         private static void AddPoliciesToRoles(string[] policies, string[] roles, IIamProvider iamProvider, IIamProviderCache iamProviderCache)
         {
-            foreach (var policy in policies)
+            foreach (var role in roles)
             {
-                foreach (var role in roles)
-                {
-                    iamProvider.AddRole(policy, role, iamProviderCache).Wait();
-                }
+                iamProvider.AddRole(policies, role, iamProviderCache).Wait();
             }
         }
 
         private static void AddPoliciesToRolesMt(string[] policies, string[] roles, long[] tenantIds, IMultiTenantIamProvider<long> iamProvider, IMultiTenantIamProviderCache<long> iamProviderCache)
         {
-            foreach (var policy in policies)
+            foreach (var role in roles)
             {
-                foreach (var role in roles)
+                foreach (var tenantId in tenantIds)
                 {
-                    foreach (var tenantId in tenantIds)
-                    {
-                        iamProvider.AddRole(policy, tenantId, role, iamProviderCache).Wait();
-                    }
+                    iamProvider.AddRole(policies, tenantId, role, iamProviderCache).Wait();
                 }
             }
         }

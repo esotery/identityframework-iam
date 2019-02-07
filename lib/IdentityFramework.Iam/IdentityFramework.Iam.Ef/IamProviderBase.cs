@@ -2,6 +2,8 @@
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace IdentityFramework.Iam.Ef
@@ -13,17 +15,14 @@ namespace IdentityFramework.Iam.Ef
     public class IamProviderBase<TKey>
         where TKey : IEquatable<TKey>
     {
-        private readonly DbContext _context;
-
         private readonly ConcurrentDictionary<string, TKey> _cache;
 
-        public IamProviderBase(DbContext context)
+        public IamProviderBase()
         {
-            _context = context ?? throw new ArgumentNullException(nameof(context));
             _cache = new ConcurrentDictionary<string, TKey>();
         }
 
-        protected virtual async Task<TKey> CreateOrGetPolicy(string policyName)
+        protected virtual async Task<TKey> CreateOrGetPolicy(string policyName, DbContext context)
         {
             TKey ret;
 
@@ -31,7 +30,7 @@ namespace IdentityFramework.Iam.Ef
 
             if (policyId.Equals(default(TKey)))
             {
-                var policy = await _context.Set<Policy<TKey>>()
+                var policy = await context.Set<Policy<TKey>>()
                     .AsNoTracking()
                     .FirstOrDefaultAsync(x => x.NormalizedName == policyName.ToUpper());
 
@@ -47,9 +46,9 @@ namespace IdentityFramework.Iam.Ef
                         NormalizedName = policyName.ToUpper()
                     };
 
-                    _context.Set<Policy<TKey>>().Add(policy);
+                    context.Set<Policy<TKey>>().Add(policy);
 
-                    await _context.SaveChangesAsync();
+                    await context.SaveChangesAsync();
 
                     ret = policy.Id;
                 }
@@ -59,6 +58,62 @@ namespace IdentityFramework.Iam.Ef
             else
             {
                 ret = policyId;
+            }
+
+            return ret;
+        }
+
+        protected virtual async Task<IDictionary<string, TKey>> CreateOrGetPolicies(IEnumerable<string> policies, DbContext context)
+        {
+            var ret = new Dictionary<string, TKey>();
+
+            var existingPolicies = new Dictionary<string, Tuple<bool, TKey>>();
+
+            foreach (var policyName in policies)
+            {
+                var exists = _cache.TryGetValue(policyName, out TKey policyId);
+
+                existingPolicies.Add(policyName, Tuple.Create(exists, policyId));
+
+                if (exists)
+                {
+                    ret.Add(policyName, policyId);
+                }
+            }
+
+            var policiesToFetchOrAdd = existingPolicies.Where(x => !x.Value.Item1).Select(x => x.Key);
+
+            var normalizedNameMapping = policiesToFetchOrAdd.ToDictionary(k => k.ToUpper(), v => v);
+
+            policiesToFetchOrAdd = normalizedNameMapping.Keys;
+
+            var fetchedPolicies = await context.Set<Policy<TKey>>()
+                .Where(x => policiesToFetchOrAdd.Contains(x.NormalizedName)).ToListAsync();
+
+            foreach (var policyName in policiesToFetchOrAdd)
+            {
+                var policy = fetchedPolicies.FirstOrDefault(x => x.NormalizedName == policyName);
+
+                if (policy == null)
+                { 
+                    policy = new Model.Policy<TKey>()
+                    {
+                        Name = normalizedNameMapping[policyName],
+                        NormalizedName = policyName
+                    };
+
+                    context.Set<Policy<TKey>>().Add(policy);
+
+                    fetchedPolicies.Add(policy);
+                }
+            }
+
+            await context.SaveChangesAsync();
+
+            foreach (var policy in fetchedPolicies)
+            {
+                _cache.AddOrUpdate(policy.Name, policy.Id, (k, v) => { v = policy.Id; return policy.Id; });
+                ret.Add(policy.Name, policy.Id);
             }
 
             return ret;

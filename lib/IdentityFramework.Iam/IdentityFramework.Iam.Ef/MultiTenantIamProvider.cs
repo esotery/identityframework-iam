@@ -2,6 +2,7 @@
 using IdentityFramework.Iam.Ef.Context;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,60 +25,68 @@ namespace IdentityFramework.Iam.Ef
         where TKey : IEquatable<TKey>
         where TTenantKey : IEquatable<TTenantKey>
     {
-        protected readonly MultiTenantIamDbContext<TUser, TRole, TKey, TTenantKey> _context;
-        protected readonly RoleManager<TRole> _roleManager;
+        protected readonly IServiceProvider _serviceProvider;
 
-        public MultiTenantIamProvider(MultiTenantIamDbContext<TUser, TRole, TKey, TTenantKey> context, RoleManager<TRole> roleManager) : base(context)
+        public MultiTenantIamProvider(IServiceProvider serviceProvider) : base()
         {
-            _context = context ?? throw new ArgumentNullException(nameof(context));
-            _roleManager = roleManager ?? throw new ArgumentNullException(nameof(roleManager));
-        }
+            _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
+        }        
 
-        public async Task<bool> IsResourceIdAccessRequired(string policyName, TTenantKey tenantId, IMultiTenantIamProviderCache<TTenantKey> cache)
+        async Task<bool> IMultiTenantIamProvider<TTenantKey>.IsResourceIdAccessRequired(string policyName, TTenantKey tenantId, IMultiTenantIamProviderCache<TTenantKey> cache)
         {
             bool? ret = cache.IsResourceIdAccessRequired(policyName, tenantId);
 
             if (!ret.HasValue)
             {
-                var policyId = await CreateOrGetPolicy(policyName);
-
-                var policy = await _context.IamPolicyResourceIds
-                    .AsNoTracking()
-                    .FirstOrDefaultAsync(x => x.PolicyId.Equals(policyId) && x.TenantId.Equals(tenantId));
-
-                ret = policy?.RequiresResourceIdAccess;
-
-                if (ret != null)
+                using (var scope = _serviceProvider.CreateScope())
                 {
-                    cache.ToggleResourceIdAccess(policyName, tenantId, policy.RequiresResourceIdAccess);
+                    var context = GetContext(scope);
+
+                    var policyId = await CreateOrGetPolicy(policyName, context);
+
+                    var policy = await context.IamPolicyResourceIds
+                        .AsNoTracking()
+                        .FirstOrDefaultAsync(x => x.PolicyId.Equals(policyId) && x.TenantId.Equals(tenantId));
+
+                    ret = policy?.RequiresResourceIdAccess;
+
+                    if (ret != null)
+                    {
+                        cache.ToggleResourceIdAccess(policyName, tenantId, policy.RequiresResourceIdAccess);
+                    }
                 }
             }
 
             return ret.GetValueOrDefault(false);
         }
 
-        public async Task ToggleResourceIdAccess(string policyName, TTenantKey tenantId, bool isRequired, IMultiTenantIamProviderCache<TTenantKey> cache)
+        async Task IMultiTenantIamProvider<TTenantKey>.ToggleResourceIdAccess(string policyName, TTenantKey tenantId, bool isRequired, IMultiTenantIamProviderCache<TTenantKey> cache)
         {
-            var policyId = await CreateOrGetPolicy(policyName);
-
-            var policy = await _context.IamPolicyResourceIds
-                .FirstOrDefaultAsync(x => x.Id.Equals(policyId) && x.TenantId.Equals(tenantId));
-
-            if (policy == null)
+            using (var scope = _serviceProvider.CreateScope())
             {
-                _context.IamPolicyResourceIds.Add(new Model.MultiTenantPolicyResourceId<TKey, TTenantKey>()
+                var context = GetContext(scope);
+
+                var policyId = await CreateOrGetPolicy(policyName, context);
+
+                var policy = await context.IamPolicyResourceIds
+                    .FirstOrDefaultAsync(x => x.Id.Equals(policyId) && x.TenantId.Equals(tenantId));
+
+                if (policy == null)
                 {
-                    PolicyId = policyId,
-                    TenantId = tenantId,
-                    RequiresResourceIdAccess = isRequired
-                });
-            }
-            else
-            {
-                policy.RequiresResourceIdAccess = isRequired;
-            }
+                    context.IamPolicyResourceIds.Add(new Model.MultiTenantPolicyResourceId<TKey, TTenantKey>()
+                    {
+                        PolicyId = policyId,
+                        TenantId = tenantId,
+                        RequiresResourceIdAccess = isRequired
+                    });
+                }
+                else
+                {
+                    policy.RequiresResourceIdAccess = isRequired;
+                }
 
-            await _context.SaveChangesAsync();
+                await context.SaveChangesAsync();
+            }
 
             cache.ToggleResourceIdAccess(policyName, tenantId, isRequired);
         }
@@ -86,23 +95,75 @@ namespace IdentityFramework.Iam.Ef
         {
             if (string.IsNullOrEmpty(cache.GetClaim(policyName, tenantId)))
             {
-                var policyId = await CreateOrGetPolicy(policyName);
+                using (var scope = _serviceProvider.CreateScope())
+                {
+                    var context = GetContext(scope);
 
-                if (!(await _context.IamPolicyClaims.AnyAsync(x => x.PolicyId.Equals(policyId) && x.Claim == claimValue && x.TenantId.Equals(tenantId))))
+                    var policyId = await CreateOrGetPolicy(policyName, context);
+
+                    if (!(await context.IamPolicyClaims.AnyAsync(x => x.PolicyId.Equals(policyId) && x.Claim == claimValue && x.TenantId.Equals(tenantId))))
+                    {
+                        var policyClaim = new Model.MultiTenantPolicyClaim<TKey, TTenantKey>()
+                        {
+                            PolicyId = policyId,
+                            TenantId = tenantId,
+                            Claim = claimValue
+                        };
+
+                        context.IamPolicyClaims.Add(policyClaim);
+
+                        await context.SaveChangesAsync();
+
+                        cache.AddOrUpdateClaim(policyName, tenantId, claimValue);
+                    }
+                }
+            }
+        }
+
+        async Task IMultiTenantIamProvider<TTenantKey>.AddClaim(ICollection<string> policies, TTenantKey tenantId, string claimValue, IMultiTenantIamProviderCache<TTenantKey> cache)
+        {
+            var existingPolicies = new Dictionary<string, bool>();
+
+            var _policies = policies.Distinct();
+
+            foreach (var policyName in _policies)
+            {
+                existingPolicies.Add(policyName, string.IsNullOrEmpty(cache.GetClaim(policyName, tenantId)));
+            }
+
+            var policiesToAdd = existingPolicies.Where(x => !x.Value).Select(x => x.Key);
+
+            using (var scope = _serviceProvider.CreateScope())
+            {
+                var context = GetContext(scope);
+
+                var policyIdMapping = await CreateOrGetPolicies(policiesToAdd, context);
+
+                var policyKeys = policyIdMapping.Values;
+
+                var existingClaims = await context.IamPolicyClaims.Where(x => policyKeys.Contains(x.PolicyId) && x.Claim == claimValue && x.TenantId.Equals(tenantId)).Select(x => x.PolicyId).ToListAsync();
+
+                var toCreate = policyKeys.Except(existingClaims);
+
+                foreach (var policyId in toCreate)
                 {
                     var policyClaim = new Model.MultiTenantPolicyClaim<TKey, TTenantKey>()
                     {
                         PolicyId = policyId,
                         TenantId = tenantId,
-                        Claim = claimValue
+                        Claim = claimValue,
+
                     };
 
-                    _context.IamPolicyClaims.Add(policyClaim);
-
-                    await _context.SaveChangesAsync();
-
-                    cache.AddOrUpdateClaim(policyName, tenantId, claimValue);
+                    context.IamPolicyClaims.Add(policyClaim);
                 }
+
+                await context.SaveChangesAsync();
+            }
+
+            foreach (var policyName in policiesToAdd)
+            {
+                cache.AddOrUpdateClaim(policyName, tenantId, claimValue);
             }
         }
 
@@ -112,25 +173,84 @@ namespace IdentityFramework.Iam.Ef
 
             if (roles == null || !roles.Contains(roleName))
             {
-                var policyId = await CreateOrGetPolicy(policyName);
+                using (var scope = _serviceProvider.CreateScope())
+                {
+                    var context = GetContext(scope);
+                    var roleManager = GetRoleManager(scope);
 
-                var role = await _roleManager.FindByNameAsync(roleName);
+                    var policyId = await CreateOrGetPolicy(policyName, context);
+
+                    var role = await roleManager.FindByNameAsync(roleName);
+
+                    if (role != null)
+                    {
+                        if (!(await context.IamPolicyRoles.AnyAsync(x => x.PolicyId.Equals(policyId) && x.RoleId.Equals(role.Id) && x.TenantId.Equals(tenantId))))
+                        {
+                            var policyRole = new Model.MultiTenantPolicyRole<TKey, TTenantKey>()
+                            {
+                                PolicyId = policyId,
+                                TenantId = tenantId,
+                                RoleId = role.Id,
+                            };
+
+                            context.IamPolicyRoles.Add(policyRole);
+
+                            await context.SaveChangesAsync();
+
+                            cache.AddRole(policyName, tenantId, roleName);
+                        }
+                    }
+                }
+            }
+        }
+
+        async Task IMultiTenantIamProvider<TTenantKey>.AddRole(ICollection<string> policies, TTenantKey tenantId, string roleName, IMultiTenantIamProviderCache<TTenantKey> cache)
+        {
+            var existingPolicies = new Dictionary<string, bool>();
+
+            var _policies = policies.Distinct();
+
+            foreach (var policyName in _policies)
+            {
+                var roles = cache.GetRoles(policyName, tenantId);
+                existingPolicies.Add(policyName, roles == null && roles.Contains(roleName));
+            }
+
+            var policiesToAdd = existingPolicies.Where(x => !x.Value).Select(x => x.Key);
+
+            using (var scope = _serviceProvider.CreateScope())
+            {
+                var context = GetContext(scope);
+                var roleManager = GetRoleManager(scope);
+
+                var policyIdMapping = await CreateOrGetPolicies(policiesToAdd, context);
+
+                var policyKeys = policyIdMapping.Values;
+
+                var role = await roleManager.FindByNameAsync(roleName);
 
                 if (role != null)
                 {
-                    if (!(await _context.IamPolicyRoles.AnyAsync(x => x.PolicyId.Equals(policyId) && x.RoleId.Equals(role.Id) && x.TenantId.Equals(tenantId))))
+                    var existingRoles = await context.IamPolicyRoles.Where(x => policyKeys.Contains(x.PolicyId) && x.RoleId.Equals(role.Id) && x.TenantId.Equals(tenantId)).Select(x => x.PolicyId).ToListAsync();
+
+                    var toCreate = policyKeys.Except(existingRoles);
+
+                    foreach (var policyId in toCreate)
                     {
                         var policyRole = new Model.MultiTenantPolicyRole<TKey, TTenantKey>()
                         {
                             PolicyId = policyId,
                             TenantId = tenantId,
-                            RoleId = role.Id,
+                            RoleId = role.Id
                         };
 
-                        _context.IamPolicyRoles.Add(policyRole);
+                        context.IamPolicyRoles.Add(policyRole);
+                    }
 
-                        await _context.SaveChangesAsync();
+                    await context.SaveChangesAsync();
 
+                    foreach (var policyName in policiesToAdd)
+                    {
                         cache.AddRole(policyName, tenantId, roleName);
                     }
                 }
@@ -143,17 +263,22 @@ namespace IdentityFramework.Iam.Ef
 
             if (string.IsNullOrEmpty(ret))
             {
-                var policyId = await CreateOrGetPolicy(policyName);
-
-                var policy = await _context.IamPolicyClaims
-                    .AsNoTracking()
-                    .FirstOrDefaultAsync(x => x.PolicyId.Equals(policyId) && x.TenantId.Equals(tenantId));
-
-                ret = policy?.Claim;
-
-                if (policy != null)
+                using (var scope = _serviceProvider.CreateScope())
                 {
-                    cache.AddOrUpdateClaim(policyName, tenantId, ret);
+                    var context = GetContext(scope);
+
+                    var policyId = await CreateOrGetPolicy(policyName, context);
+
+                    var policy = await context.IamPolicyClaims
+                        .AsNoTracking()
+                        .FirstOrDefaultAsync(x => x.PolicyId.Equals(policyId) && x.TenantId.Equals(tenantId));
+
+                    ret = policy?.Claim;
+
+                    if (policy != null)
+                    {
+                        cache.AddOrUpdateClaim(policyName, tenantId, ret);
+                    }
                 }
             }
 
@@ -166,23 +291,28 @@ namespace IdentityFramework.Iam.Ef
 
             if (ret == null || ret.Count == 0)
             {
-                var policyId = await CreateOrGetPolicy(policyName);
-
-                var roles = await _context.IamPolicyRoles
-                    .AsNoTracking()
-                    .Where(x => x.PolicyId.Equals(policyId) && x.TenantId.Equals(tenantId))
-                        .Select(x => x.RoleId)
-                            .ToListAsync();
-
-                ret = await _context.Roles
-                    .AsNoTracking()
-                    .Where(x => roles.Contains(x.Id))
-                        .Select(x => x.Name)
-                            .ToListAsync();
-
-                foreach (var role in ret)
+                using (var scope = _serviceProvider.CreateScope())
                 {
-                    cache.AddRole(policyName, tenantId, role);
+                    var context = GetContext(scope);
+
+                    var policyId = await CreateOrGetPolicy(policyName, context);
+
+                    var roles = await context.IamPolicyRoles
+                        .AsNoTracking()
+                        .Where(x => x.PolicyId.Equals(policyId) && x.TenantId.Equals(tenantId))
+                            .Select(x => x.RoleId)
+                                .ToListAsync();
+
+                    ret = await context.Roles
+                        .AsNoTracking()
+                        .Where(x => roles.Contains(x.Id))
+                            .Select(x => x.Name)
+                                .ToListAsync();
+
+                    foreach (var role in ret)
+                    {
+                        cache.AddRole(policyName, tenantId, role);
+                    }
                 }
             }
 
@@ -198,53 +328,145 @@ namespace IdentityFramework.Iam.Ef
 
         async Task IMultiTenantIamProvider<TTenantKey>.RemoveClaim(string policyName, TTenantKey tenantId, IMultiTenantIamProviderCache<TTenantKey> cache)
         {
-            var policyId = await CreateOrGetPolicy(policyName);
-
-            var claim = await _context.IamPolicyClaims.FirstOrDefaultAsync(x => x.PolicyId.Equals(policyId) && x.TenantId.Equals(tenantId));
-
-            if (claim != null)
+            using (var scope = _serviceProvider.CreateScope())
             {
-                _context.IamPolicyClaims.Remove(claim);
+                var context = GetContext(scope);
 
-                await _context.SaveChangesAsync();
+                var policyId = await CreateOrGetPolicy(policyName, context);
+
+                var claim = await context.IamPolicyClaims.FirstOrDefaultAsync(x => x.PolicyId.Equals(policyId) && x.TenantId.Equals(tenantId));
+
+                if (claim != null)
+                {
+                    context.IamPolicyClaims.Remove(claim);
+
+                    await context.SaveChangesAsync();
+                }
             }
 
             cache.RemoveClaim(policyName, tenantId);
         }
 
-        async Task IMultiTenantIamProvider<TTenantKey>.RemoveRole(string policyName, TTenantKey tenantId, string roleName, IMultiTenantIamProviderCache<TTenantKey> cache)
+        async Task IMultiTenantIamProvider<TTenantKey>.RemoveClaim(ICollection<string> policies, TTenantKey tenantId, string claimValue, IMultiTenantIamProviderCache<TTenantKey> cache)
         {
-            var policyId = await CreateOrGetPolicy(policyName);
-            var role = await _roleManager.FindByNameAsync(roleName);
+            var _policies = policies.Distinct();
 
-            if (role != null)
+            using (var scope = _serviceProvider.CreateScope())
             {
-                var iamRole = await _context.IamPolicyRoles.FirstOrDefaultAsync(x => x.PolicyId.Equals(policyId) && x.RoleId.Equals(role.Id) && x.TenantId.Equals(tenantId));
+                var context = GetContext(scope);
 
-                if (iamRole != null)
+                var policyIdMapping = await CreateOrGetPolicies(_policies, context);
+
+                var policyKeys = policyIdMapping.Values;
+
+                var claims = await context.IamPolicyClaims.Where(x => policyKeys.Contains(x.PolicyId) && x.TenantId.Equals(tenantId)).ToListAsync();
+
+                foreach (var claim in claims)
                 {
-                    _context.IamPolicyRoles.Remove(iamRole);
-
-                    await _context.SaveChangesAsync();
+                    context.IamPolicyClaims.Remove(claim);
                 }
 
-                cache.RemoveRole(policyName, tenantId, roleName);
+                await context.SaveChangesAsync();
+
+                foreach (var policyName in policies)
+                {
+                    cache.RemoveClaim(policyName, tenantId);
+                }
+            }
+        }
+
+        async Task IMultiTenantIamProvider<TTenantKey>.RemoveRole(string policyName, TTenantKey tenantId, string roleName, IMultiTenantIamProviderCache<TTenantKey> cache)
+        {
+            using (var scope = _serviceProvider.CreateScope())
+            {
+                var context = GetContext(scope);
+                var roleManager = GetRoleManager(scope);
+
+                var policyId = await CreateOrGetPolicy(policyName, context);
+                var role = await roleManager.FindByNameAsync(roleName);
+
+                if (role != null)
+                {
+                    var iamRole = await context.IamPolicyRoles.FirstOrDefaultAsync(x => x.PolicyId.Equals(policyId) && x.RoleId.Equals(role.Id) && x.TenantId.Equals(tenantId));
+
+                    if (iamRole != null)
+                    {
+                        context.IamPolicyRoles.Remove(iamRole);
+
+                        await context.SaveChangesAsync();
+                    }
+
+                    cache.RemoveRole(policyName, tenantId, roleName);
+                }
+            }
+        }
+
+        async Task IMultiTenantIamProvider<TTenantKey>.RemoveRole(ICollection<string> policies, TTenantKey tenantId, string roleName, IMultiTenantIamProviderCache<TTenantKey> cache)
+        {
+            var _policies = policies.Distinct();
+
+            using (var scope = _serviceProvider.CreateScope())
+            {
+                var context = GetContext(scope);
+                var roleManager = GetRoleManager(scope);
+
+                var policyIdMapping = await CreateOrGetPolicies(_policies, context);
+
+                var policyKeys = policyIdMapping.Values;
+
+                var role = await roleManager.FindByNameAsync(roleName);
+
+                if (role != null)
+                {
+                    var iamRoles = await context.IamPolicyRoles.Where(x => policyKeys.Contains(x.PolicyId) && x.RoleId.Equals(role.Id) && x.TenantId.Equals(tenantId)).ToListAsync();
+
+                    foreach (var iamRole in iamRoles)
+                    {
+                        context.IamPolicyRoles.Remove(iamRole);
+                    }
+
+                    await context.SaveChangesAsync();
+
+                    foreach (var policyName in policies)
+                    {
+                        cache.RemoveRole(policyName, tenantId, roleName);
+                    }
+                }
             }
         }
 
         async Task IMultiTenantIamProvider<TTenantKey>.RemoveRoles(string policyName, TTenantKey tenantId, IMultiTenantIamProviderCache<TTenantKey> cache)
         {
-            var policyId = await CreateOrGetPolicy(policyName);
+            using (var scope = _serviceProvider.CreateScope())
+            {
+                var context = GetContext(scope);
 
-            var iamRoles = await _context.IamPolicyRoles
-                .Where(x => x.PolicyId.Equals(policyId) && x.TenantId.Equals(tenantId))
-                    .ToListAsync();
+                var policyId = await CreateOrGetPolicy(policyName, context);
 
-            _context.IamPolicyRoles.RemoveRange(iamRoles);
+                var iamRoles = await context.IamPolicyRoles
+                    .Where(x => x.PolicyId.Equals(policyId) && x.TenantId.Equals(tenantId))
+                        .ToListAsync();
 
-            await _context.SaveChangesAsync();
+                context.IamPolicyRoles.RemoveRange(iamRoles);
 
-            cache.RemoveRoles(policyName, tenantId);
+                await context.SaveChangesAsync();
+
+                cache.RemoveRoles(policyName, tenantId);
+            }
+        }
+
+        protected virtual MultiTenantIamDbContext<TUser, TRole, TKey, TTenantKey> GetContext(IServiceScope scope)
+        {
+            var ret = scope.ServiceProvider.GetRequiredService<MultiTenantIamDbContext<TUser, TRole, TKey, TTenantKey>>();
+
+            return ret;
+        }
+
+        protected virtual RoleManager<TRole> GetRoleManager(IServiceScope scope)
+        {
+            var ret = scope.ServiceProvider.GetRequiredService<RoleManager<TRole>>();
+
+            return ret;
         }
     }
 }

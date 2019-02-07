@@ -1,11 +1,9 @@
 ﻿using IdentityFramework.Iam.Core;
 using IdentityFramework.Iam.Core.Interface;
 using IdentityFramework.Iam.TestServer.Iam;
-using IdentityFramework.Iam.TestServer.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authorization.Infrastructure;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;

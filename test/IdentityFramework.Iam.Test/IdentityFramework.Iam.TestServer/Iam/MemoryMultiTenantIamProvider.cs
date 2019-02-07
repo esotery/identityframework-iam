@@ -8,14 +8,14 @@ namespace IdentityFramework.Iam.TestServer.Iam
     public class MemoryMultiTenantIamProvider<TTenantKey> : IMultiTenantIamProvider<TTenantKey>
          where TTenantKey : IEquatable<TTenantKey>
     {
-        public Task<bool> IsResourceIdAccessRequired(string policyName, TTenantKey tenantId, IMultiTenantIamProviderCache<TTenantKey> cache)
+        Task<bool> IMultiTenantIamProvider<TTenantKey>.IsResourceIdAccessRequired(string policyName, TTenantKey tenantId, IMultiTenantIamProviderCache<TTenantKey> cache)
         {
             var ret = cache.IsResourceIdAccessRequired(policyName, tenantId);
 
             return Task.FromResult(ret.GetValueOrDefault(false));
         }
 
-        public Task ToggleResourceIdAccess(string policyName, TTenantKey tenantId, bool isRequired, IMultiTenantIamProviderCache<TTenantKey> cache)
+        Task IMultiTenantIamProvider<TTenantKey>.ToggleResourceIdAccess(string policyName, TTenantKey tenantId, bool isRequired, IMultiTenantIamProviderCache<TTenantKey> cache)
         {
             cache.ToggleResourceIdAccess(policyName, tenantId, isRequired);
 
@@ -29,9 +29,29 @@ namespace IdentityFramework.Iam.TestServer.Iam
             return Task.CompletedTask;
         }
 
+        Task IMultiTenantIamProvider<TTenantKey>.AddClaim(ICollection<string> policies, TTenantKey tenantId, string claimValue, IMultiTenantIamProviderCache<TTenantKey> cache)
+        {
+            foreach (var policyName in policies)
+            {
+                cache.AddOrUpdateClaim(policyName, tenantId, claimValue);
+            }
+
+            return Task.CompletedTask;
+        }
+
         Task IMultiTenantIamProvider<TTenantKey>.AddRole(string policyName, TTenantKey tenantId, string roleName, IMultiTenantIamProviderCache<TTenantKey> cache)
         {
             cache.AddRole(policyName, tenantId, roleName);
+
+            return Task.CompletedTask;
+        }
+
+        Task IMultiTenantIamProvider<TTenantKey>.AddRole(ICollection<string> policies, TTenantKey tenantId, string roleName, IMultiTenantIamProviderCache<TTenantKey> cache)
+        {
+            foreach (var policyName in policies)
+            {
+                cache.AddRole(policyName, tenantId, roleName);
+            }
 
             return Task.CompletedTask;
         }
@@ -64,9 +84,29 @@ namespace IdentityFramework.Iam.TestServer.Iam
             return Task.CompletedTask;
         }
 
+        Task IMultiTenantIamProvider<TTenantKey>.RemoveClaim(ICollection<string> policies, TTenantKey tenantId, string claimValue, IMultiTenantIamProviderCache<TTenantKey> cache)
+        {
+            foreach (var policyName in policies)
+            {
+                cache.RemoveClaim(policyName, tenantId);
+            }
+
+            return Task.CompletedTask;
+        }
+
         Task IMultiTenantIamProvider<TTenantKey>.RemoveRole(string policyName, TTenantKey tenantId, string roleName, IMultiTenantIamProviderCache<TTenantKey> cache)
         {
             cache.RemoveRole(policyName, tenantId, roleName);
+
+            return Task.CompletedTask;
+        }
+
+        Task IMultiTenantIamProvider<TTenantKey>.RemoveRole(ICollection<string> policies, TTenantKey tenantId, string roleName, IMultiTenantIamProviderCache<TTenantKey> cache)
+        {
+            foreach (var policyName in policies)
+            {
+                cache.RemoveRole(policyName, tenantId, roleName);
+            }
 
             return Task.CompletedTask;
         }

@@ -1049,7 +1049,7 @@ namespace IdentityFramework.Iam.Core
         /// <param name="configure">The configuration.</param>
         public static void AddIamCore(this IServiceCollection services, Action<IamOptions> configure = null)
         {
-            AddIamCore<long>(services, configure);
+            AddIamCore<long, IamAuthorizationPolicyProvider>(services, configure);
         }
 
         /// <summary>
@@ -1060,6 +1060,20 @@ namespace IdentityFramework.Iam.Core
         /// <param name="configure">The configuration.</param>
         public static void AddIamCore<TResourceKey>(this IServiceCollection services, Action<IamOptions> configure = null)
             where TResourceKey : IEquatable<TResourceKey>
+        {
+            AddIamCore<TResourceKey, IamAuthorizationPolicyProvider>(services, configure);
+        }
+
+        /// <summary>
+        /// Adds the IAM core classes to DI.
+        /// </summary>
+        /// <typeparam name="TResourceKey">The type of the resource id.</typeparam>
+        /// <typeparam name="TIamAuthorizationPolicyProvider">The type of the IAM Authorization provider</typeparam>
+        /// <param name="services">The services.</param>
+        /// <param name="configure">The configuration.</param>
+        public static void AddIamCore<TResourceKey, TIamAuthorizationPolicyProvider>(this IServiceCollection services, Action<IamOptions> configure = null)
+            where TResourceKey : IEquatable<TResourceKey>
+            where TIamAuthorizationPolicyProvider : class
         {
             var options = new IamOptions();
             configure?.Invoke(options);
@@ -1085,7 +1099,7 @@ namespace IdentityFramework.Iam.Core
                 act.ParamName = options.IamResourceProviderOptions.ParamName;
             });
 
-            services.AddSingleton<IAuthorizationPolicyProvider, IamAuthorizationPolicyProvider>();
+            services.AddSingleton(typeof(IAuthorizationPolicyProvider), typeof(TIamAuthorizationPolicyProvider));
         }
 
         /// <summary>
@@ -1097,7 +1111,7 @@ namespace IdentityFramework.Iam.Core
         public static void AddMultiTenantIamCore<TTenantKey>(this IServiceCollection services, Action<IamMultiTenantOptions> configure = null)
             where TTenantKey : IEquatable<TTenantKey>
         {
-            AddMultiTenantIamCore<TTenantKey, long>(services, configure);
+            AddMultiTenantIamCore<TTenantKey, long, IamMultiTenantAuthorizationPolicyProvider<TTenantKey>>(services, configure);
         }
 
         /// <summary>
@@ -1110,6 +1124,22 @@ namespace IdentityFramework.Iam.Core
         public static void AddMultiTenantIamCore<TTenantKey, TResourceKey>(this IServiceCollection services, Action<IamMultiTenantOptions> configure = null)
             where TTenantKey : IEquatable<TTenantKey>
             where TResourceKey : IEquatable<TResourceKey>
+        {
+            AddMultiTenantIamCore<TTenantKey, TResourceKey, IamMultiTenantAuthorizationPolicyProvider<TTenantKey>>(services, configure);
+        }
+
+        /// <summary>
+        /// Adds the multi tenant IAM core classes to DI.
+        /// </summary>
+        /// <typeparam name="TTenantKey">The type of the tenant id.</typeparam>
+        /// <typeparam name="TResourceKey">The type of the resource id.</typeparam>
+        /// <typeparam name="TIamAuthorizationPolicyProvider">The type of the IAM Authorization provider</typeparam>
+        /// <param name="services">The services.</param>
+        /// <param name="configure">The configuration.</param>
+        public static void AddMultiTenantIamCore<TTenantKey, TResourceKey, TIamAuthorizationPolicyProvider>(this IServiceCollection services, Action<IamMultiTenantOptions> configure = null)
+            where TTenantKey : IEquatable<TTenantKey>
+            where TResourceKey : IEquatable<TResourceKey>
+            where TIamAuthorizationPolicyProvider : class 
         {
             var options = new IamMultiTenantOptions();
             configure?.Invoke(options);
@@ -1146,7 +1176,7 @@ namespace IdentityFramework.Iam.Core
                 act.HeaderName = options.IamTenantProviderOptions.HeaderName;
             });
 
-            services.AddSingleton<IAuthorizationPolicyProvider, IamMultiTenantAuthorizationPolicyProvider<TTenantKey>>();
+            services.AddSingleton(typeof(IAuthorizationPolicyProvider), typeof(TIamAuthorizationPolicyProvider));
         }
     }
 
