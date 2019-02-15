@@ -8,7 +8,7 @@
     <RepositoryType>GIT</RepositoryType>
     <PackageLicenseUrl>https://github.com/esotery/identityframework-iam/blob/master/LICENSE</PackageLicenseUrl>
     <Description>Extends rather static .NET IdentityFramework Policies of fine grained IAM rules for better and more dynamic Authorization handling.</Description>
-    <Version>1.0.4-beta</Version>
+    <Version>1.0.4</Version>
     <AssemblyVersion>1.0.4.0</AssemblyVersion>
     <FileVersion>1.0.4.0</FileVersion>
     <Authors>Jan Czopik</Authors>
