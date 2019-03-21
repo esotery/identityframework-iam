@@ -59,7 +59,7 @@ namespace IdentityFramework.Iam.Ef.Test
 
             Assert.AreEqual(typeof(IamMultiTenantAuthorizationPolicyProvider<long>), sp.GetRequiredService<IAuthorizationPolicyProvider>().GetType());
             Assert.AreEqual(typeof(DefaultMultiTenantIamProviderCache<long>), sp.GetRequiredService<IMultiTenantIamProviderCache<long>>().GetType());
-            Assert.AreEqual(typeof(MultiTenantIamProvider<IdentityUser<long>, IdentityRole<long>, long, long>), sp.GetRequiredService<IMultiTenantIamProvider<long>>().GetType());
+            Assert.AreEqual(typeof(MultiTenantIamProvider<IdentityUser<long>, IdentityRole<long>, long, long, MultiTenantIamDbContext<IdentityUser<long>, IdentityRole<long>, long, long>>), sp.GetRequiredService<IMultiTenantIamProvider<long>>().GetType());
 
             var tenantProvider = sp.GetRequiredService<ITenantProvider<long>>();
 

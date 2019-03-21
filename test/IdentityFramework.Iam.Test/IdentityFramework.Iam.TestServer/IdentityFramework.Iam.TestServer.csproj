@@ -22,6 +22,18 @@
       </ItemGroup>
     </Otherwise>
   </Choose>
+  <Choose>
+    <When Condition="'$(Configuration)' == 'Release'">
+      <ItemGroup>
+        <PackageReference Include="IdentityFramework.Iam.Ef" Version="1.0.3" />
+      </ItemGroup>
+    </When>
+    <Otherwise>
+      <ItemGroup>
+        <ProjectReference Include="..\..\..\lib\IdentityFramework.Iam\IdentityFramework.Iam.Ef\IdentityFramework.Iam.Ef.csproj" />
+      </ItemGroup>
+    </Otherwise>
+  </Choose>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.App" />

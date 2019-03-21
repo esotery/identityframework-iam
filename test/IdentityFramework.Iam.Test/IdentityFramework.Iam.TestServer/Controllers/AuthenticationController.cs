@@ -25,7 +25,6 @@ namespace IdentityFramework.Iam.TestServer.Controllers
         [AllowAnonymous]
         public async Task<JwtToken> Login([FromBody]Login credentials, 
             [FromServices]SignInManager<User> signInManager,
-            [FromServices]RoleManager<Role> roleManager,
             [FromServices]IJwtFactory jwtFactory, 
             [FromServices]IOptions<JwtIssuerOptions> jwtOptions,
             [FromServices]IOptions<ServerOptions> serverOptions,
@@ -47,7 +46,8 @@ namespace IdentityFramework.Iam.TestServer.Controllers
                     {
                         var claimStore = scope.ServiceProvider.GetRequiredService<IMultiTenantUserClaimStore<User, long>>();
                         var roleStore = scope.ServiceProvider.GetRequiredService<IMultiTenantUserRoleStore<User, long>>();
-                        var roleClaimStore = scope.ServiceProvider.GetRequiredService<IMultiTenantRoleClaimStore<Role, long>>();
+                        var roleClaimStore = scope.ServiceProvider.GetRequiredService<IMultiTenantRoleClaimStore<MultiTenantRole, long>>();
+                        var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<MultiTenantRole>>();
 
                         var roles = await roleStore.GetRolesAsync(user, CancellationToken.None);
 
@@ -74,17 +74,22 @@ namespace IdentityFramework.Iam.TestServer.Controllers
                 }
                 else
                 {
-                    var roles = await signInManager.UserManager.GetRolesAsync(user);
-
-                    var roleClaims = new List<Claim>();
-
-                    foreach (var role in roles)
+                    using (var scope = serviceProvider.CreateScope())
                     {
-                        var _role = await roleManager.FindByNameAsync(role);
-                        roleClaims.AddRange(await roleManager.GetClaimsAsync(_role));
-                    }
+                        var roles = await signInManager.UserManager.GetRolesAsync(user);
 
-                    identity = jwtFactory.GenerateClaimsIdentity(user, roles, await signInManager.UserManager.GetClaimsAsync(user), roleClaims);
+                        var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<Role>>();
+
+                        var roleClaims = new List<Claim>();
+
+                        foreach (var role in roles)
+                        {
+                            var _role = await roleManager.FindByNameAsync(role);
+                            roleClaims.AddRange(await roleManager.GetClaimsAsync(_role));
+                        }
+
+                        identity = jwtFactory.GenerateClaimsIdentity(user, roles, await signInManager.UserManager.GetClaimsAsync(user), roleClaims);
+                    }
                 }
 
                 ret = await identity.GenerateJwt(jwtFactory, jwtOptions.Value, user.Id);

@@ -27,11 +27,11 @@ namespace IdentityFramework.Iam.Test
         {
             var services = new ServiceCollection();
 
-            services.AddTransient(typeof(IMultiTenantUserClaimStore<User, long>), typeof(MemoryMultiTenantStore<User, Role, long, long>));
-            services.AddTransient(typeof(IMultiTenantUserRoleStore<User, long>), typeof(MemoryMultiTenantStore<User, Role, long, long>));
+            services.AddTransient(typeof(IMultiTenantUserClaimStore<User, long>), typeof(MemoryMultiTenantStore<User, MultiTenantRole, long, long>));
+            services.AddTransient(typeof(IMultiTenantUserRoleStore<User, long>), typeof(MemoryMultiTenantStore<User, MultiTenantRole, long, long>));
 
-            var builder = services.AddIdentity<User, Role>()
-                .AddEntityFrameworkStores<IdentityDbContext<User, Role, long>>()
+            var builder = services.AddIdentity<User, MultiTenantRole>()
+                .AddEntityFrameworkStores<IdentityDbContext<User, MultiTenantRole, long>>()
                 .AddDefaultTokenProviders();
 
             services.AddAuthentication(options =>
@@ -45,7 +45,7 @@ namespace IdentityFramework.Iam.Test
 
             services.AddMultiTenantIamCore<long>();
 
-            services.AddDbContext<IdentityDbContext<User, Role, long>>(options =>
+            services.AddDbContext<IdentityDbContext<User, MultiTenantRole, long>>(options =>
                 options.UseInMemoryDatabase("test"));
 
             serviceProvider = services.BuildServiceProvider();

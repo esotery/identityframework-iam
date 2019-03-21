@@ -6,6 +6,7 @@ using IdentityFramework.Iam.TestServer.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Respawn;
 using System.Linq;
@@ -29,12 +30,14 @@ namespace IdentityFramework.Iam.Ef.Test
 
             var services = new ServiceCollection();
 
-            services.AddTransient(typeof(IMultiTenantUserClaimStore<User, long>), typeof(MultiTenantUserClaimStore<User, Role, long, long>));
-            services.AddTransient(typeof(IMultiTenantUserRoleStore<User, long>), typeof(MultiTenantUserRoleStore<User, Role, long, long>));
+            services.AddTransient(typeof(IMultiTenantUserClaimStore<User, long>), typeof(MultiTenantUserClaimStore<User, MultiTenantRole, long, long, MultiTenantMultiRoleIamDbContext<User, MultiTenantRole, long, long>>));
+            services.AddTransient(typeof(IMultiTenantUserRoleStore<User, long>), typeof(MultiTenantMultiRoleUserRoleStore<User, MultiTenantRole, long, long, MultiTenantMultiRoleIamDbContext<User, MultiTenantRole, long, long>>));
 
-            var builder = services.AddIdentity<User, Role>()
-                .AddEntityFrameworkStores<MultiTenantIamDbContext<User, Role, long, long>>()
+            var builder = services.AddIdentity<User, MultiTenantRole>()
+                .AddEntityFrameworkStores<MultiTenantMultiRoleIamDbContext<User, MultiTenantRole, long, long>>()
                 .AddDefaultTokenProviders();
+
+            services.Replace(new ServiceDescriptor(typeof(IRoleValidator<MultiTenantRole>), typeof(MultiTenantRoleValidator<MultiTenantRole, long, long>), ServiceLifetime.Scoped));
 
             services.AddAuthentication(options =>
             {
@@ -47,14 +50,14 @@ namespace IdentityFramework.Iam.Ef.Test
 
             services.AddMultiTenantIamCore<long>();
 
-            services.AddDbContext<MultiTenantIamDbContext<User, Role, long, long>>(options =>
+            services.AddDbContext<MultiTenantMultiRoleIamDbContext<User, MultiTenantRole, long, long>>(options =>
                 options.UseSqlServer(connectionString));
 
             serviceProvider = services.BuildServiceProvider();
 
             using (var scope = serviceProvider.CreateScope())
             {
-                var dbContext = scope.ServiceProvider.GetRequiredService(typeof(MultiTenantIamDbContext<User, Role, long, long>)) as MultiTenantIamDbContext<User, Role, long, long>;
+                var dbContext = scope.ServiceProvider.GetRequiredService(typeof(MultiTenantMultiRoleIamDbContext<User, MultiTenantRole, long, long>)) as MultiTenantMultiRoleIamDbContext<User, MultiTenantRole, long, long>;
 
                 dbContext.Database.EnsureCreated();
 
@@ -65,17 +68,31 @@ namespace IdentityFramework.Iam.Ef.Test
             claimStore = serviceProvider.GetRequiredService(typeof(IMultiTenantUserClaimStore<User, long>)) as IMultiTenantUserClaimStore<User, long>;
             roleStore = serviceProvider.GetRequiredService(typeof(IMultiTenantUserRoleStore<User, long>)) as IMultiTenantUserRoleStore<User, long>;
 
-            var roleManager = serviceProvider.GetRequiredService(typeof(RoleManager<Role>)) as RoleManager<Role>;
+            var roleManager = serviceProvider.GetRequiredService(typeof(RoleManager<MultiTenantRole>)) as RoleManager<MultiTenantRole>;
 
-            roleManager.CreateAsync(new Role()
+            roleManager.CreateAsync(new MultiTenantRole()
             {
-                Name = "admin"
+                Name = "admin",
+                TenantId = 1
             }).Wait();
 
-            roleManager.CreateAsync(new Role()
+            roleManager.CreateAsync(new MultiTenantRole()
             {
-                Name = "manager"
+                Name = "manager",
+                TenantId = 1
             }).Wait();
+
+            var res = roleManager.CreateAsync(new MultiTenantRole()
+            {
+                Name = "admin",
+                TenantId = 2
+            }).Result;
+
+            res = roleManager.CreateAsync(new MultiTenantRole()
+            {
+                Name = "manager",
+                TenantId = 2
+            }).Result;
 
             userManager.CreateAsync(new User()
             {

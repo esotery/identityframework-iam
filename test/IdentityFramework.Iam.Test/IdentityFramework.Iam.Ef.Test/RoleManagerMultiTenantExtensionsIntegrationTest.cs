@@ -16,10 +16,10 @@ namespace IdentityFramework.Iam.Ef.Test
     [TestClass]
     public class RoleManagerMultiTenantExtensionsUnitTest
     {
-        RoleManager<Role> roleManager;
-        Role role;
+        RoleManager<MultiTenantRole> roleManager;
+        MultiTenantRole role;
         ServiceProvider serviceProvider;
-        IMultiTenantRoleClaimStore<Role, long> claimStore;
+        IMultiTenantRoleClaimStore<MultiTenantRole, long> claimStore;
 
         [TestInitialize]
         public void Init()
@@ -28,10 +28,10 @@ namespace IdentityFramework.Iam.Ef.Test
 
             var services = new ServiceCollection();
 
-            services.AddTransient(typeof(IMultiTenantRoleClaimStore<Role, long>), typeof(MultiTenantRoleClaimStore<User, Role, long, long>));
+            services.AddTransient(typeof(IMultiTenantRoleClaimStore<MultiTenantRole, long>), typeof(MultiTenantRoleClaimStore<User, MultiTenantRole, long, long, MultiTenantMultiRoleIamDbContext<User, MultiTenantRole, long, long>>));
 
-            var builder = services.AddIdentity<User, Role>()
-                .AddEntityFrameworkStores<MultiTenantIamDbContext<User, Role, long, long>>()
+            var builder = services.AddIdentity<User, MultiTenantRole>()
+                .AddEntityFrameworkStores<MultiTenantMultiRoleIamDbContext<User, MultiTenantRole, long, long>>()
                 .AddDefaultTokenProviders();
 
             services.AddAuthentication(options =>
@@ -45,25 +45,25 @@ namespace IdentityFramework.Iam.Ef.Test
 
             services.AddMultiTenantIamCore<long>();
 
-            services.AddDbContext<MultiTenantIamDbContext<User, Role, long, long>>(options =>
+            services.AddDbContext<MultiTenantMultiRoleIamDbContext<User, MultiTenantRole, long, long>>(options =>
                 options.UseSqlServer(connectionString));
 
             serviceProvider = services.BuildServiceProvider();
 
             using (var scope = serviceProvider.CreateScope())
             {
-                var dbContext = scope.ServiceProvider.GetRequiredService(typeof(MultiTenantIamDbContext<User, Role, long, long>)) as MultiTenantIamDbContext<User, Role, long, long>;
+                var dbContext = scope.ServiceProvider.GetRequiredService(typeof(MultiTenantMultiRoleIamDbContext<User, MultiTenantRole, long, long>)) as MultiTenantMultiRoleIamDbContext<User, MultiTenantRole, long, long>;
 
                 dbContext.Database.EnsureCreated();
 
                 new Checkpoint().Reset(connectionString).Wait();
             }
 
-            roleManager = serviceProvider.GetRequiredService(typeof(RoleManager<Role>)) as RoleManager<Role>;
+            roleManager = serviceProvider.GetRequiredService(typeof(RoleManager<MultiTenantRole>)) as RoleManager<MultiTenantRole>;
 
-            claimStore = serviceProvider.GetRequiredService(typeof(IMultiTenantRoleClaimStore<Role, long>)) as IMultiTenantRoleClaimStore<Role, long>;
+            claimStore = serviceProvider.GetRequiredService(typeof(IMultiTenantRoleClaimStore<MultiTenantRole, long>)) as IMultiTenantRoleClaimStore<MultiTenantRole, long>;
 
-            roleManager.CreateAsync(new Role()
+            roleManager.CreateAsync(new MultiTenantRole()
             {
                 Name = "test",
             }).Wait();
@@ -74,47 +74,47 @@ namespace IdentityFramework.Iam.Ef.Test
         [TestMethod]
         public async Task GrantAccessToResourcesTest()
         {
-            await GetRoleManager().GrantAccessToResources<Role, long, long>(claimStore, role, 1, "resource:operation", 1, 2, 3);
+            await GetRoleManager().GrantAccessToResources<MultiTenantRole, long, long>(claimStore, role, 1, "resource:operation", 1, 2, 3);
 
-            Assert.AreEqual(new List<long>() { 1, 2, 3 }.Count, (await GetRoleManager().GetAccessibleResources<Role, long, long>(claimStore, role, 1, "resource:operation")).ResourceIds.Count);
-            Assert.IsFalse((await GetRoleManager().GetAccessibleResources<Role, long, long>(claimStore, role, 1, "resource:operation")).HasAccessToAllResources);
+            Assert.AreEqual(new List<long>() { 1, 2, 3 }.Count, (await GetRoleManager().GetAccessibleResources<MultiTenantRole, long, long>(claimStore, role, 1, "resource:operation")).ResourceIds.Count);
+            Assert.IsFalse((await GetRoleManager().GetAccessibleResources<MultiTenantRole, long, long>(claimStore, role, 1, "resource:operation")).HasAccessToAllResources);
         }
 
         [TestMethod]
         public async Task GrantAccessToAllResourcesTest()
         {
-            await GetRoleManager().GrantAccessToAllResources<Role, long>(claimStore, role, 1, "resource:operation");
+            await GetRoleManager().GrantAccessToAllResources<MultiTenantRole, long>(claimStore, role, 1, "resource:operation");
 
-            Assert.AreEqual(new List<long>() { }.Count, (await GetRoleManager().GetAccessibleResources<Role, long, long>(claimStore, role, 1, "resource:operation")).ResourceIds.Count);
-            Assert.IsTrue((await GetRoleManager().GetAccessibleResources<Role, long, long>(claimStore, role, 1, "resource:operation")).HasAccessToAllResources);
+            Assert.AreEqual(new List<long>() { }.Count, (await GetRoleManager().GetAccessibleResources<MultiTenantRole, long, long>(claimStore, role, 1, "resource:operation")).ResourceIds.Count);
+            Assert.IsTrue((await GetRoleManager().GetAccessibleResources<MultiTenantRole, long, long>(claimStore, role, 1, "resource:operation")).HasAccessToAllResources);
         }
 
         [TestMethod]
         public async Task RevokeAccessToAllResourcesTest()
         {
-            await GetRoleManager().GrantAccessToAllResources<Role, long>(claimStore, role, 1, "resource:operation");
+            await GetRoleManager().GrantAccessToAllResources<MultiTenantRole, long>(claimStore, role, 1, "resource:operation");
 
-            Assert.AreEqual(new List<long>() { }.Count, (await GetRoleManager().GetAccessibleResources<Role, long, long>(claimStore, role, 1, "resource:operation")).ResourceIds.Count);
-            Assert.IsTrue((await GetRoleManager().GetAccessibleResources<Role, long, long>(claimStore, role, 1, "resource:operation")).HasAccessToAllResources);
+            Assert.AreEqual(new List<long>() { }.Count, (await GetRoleManager().GetAccessibleResources<MultiTenantRole, long, long>(claimStore, role, 1, "resource:operation")).ResourceIds.Count);
+            Assert.IsTrue((await GetRoleManager().GetAccessibleResources<MultiTenantRole, long, long>(claimStore, role, 1, "resource:operation")).HasAccessToAllResources);
 
-            await GetRoleManager().RevokeAccessToAllResources<Role, long>(claimStore, role, 1, "resource:operation");
+            await GetRoleManager().RevokeAccessToAllResources<MultiTenantRole, long>(claimStore, role, 1, "resource:operation");
 
-            Assert.AreEqual(new List<long>() { }.Count, (await GetRoleManager().GetAccessibleResources<Role, long, long>(claimStore, role, 1, "resource:operation")).ResourceIds.Count);
-            Assert.IsFalse((await GetRoleManager().GetAccessibleResources<Role, long, long>(claimStore, role, 1, "resource:operation")).HasAccessToAllResources);
+            Assert.AreEqual(new List<long>() { }.Count, (await GetRoleManager().GetAccessibleResources<MultiTenantRole, long, long>(claimStore, role, 1, "resource:operation")).ResourceIds.Count);
+            Assert.IsFalse((await GetRoleManager().GetAccessibleResources<MultiTenantRole, long, long>(claimStore, role, 1, "resource:operation")).HasAccessToAllResources);
         }
 
         [TestMethod]
         public async Task GetAccessibleResourcesTest()
         {
-            await GetRoleManager().GrantAccessToResources<Role, long, long>(claimStore, role, 1, "resource:operation", 1, 2, 3);
+            await GetRoleManager().GrantAccessToResources<MultiTenantRole, long, long>(claimStore, role, 1, "resource:operation", 1, 2, 3);
 
-            Assert.AreEqual("1,2,3", string.Join(',', (await GetRoleManager().GetAccessibleResources<Role, long, long>(claimStore, role, 1, "resource:operation")).ResourceIds));
-            Assert.IsFalse((await GetRoleManager().GetAccessibleResources<Role, long, long>(claimStore, role, 1, "resource:operation")).HasAccessToAllResources);
+            Assert.AreEqual("1,2,3", string.Join(',', (await GetRoleManager().GetAccessibleResources<MultiTenantRole, long, long>(claimStore, role, 1, "resource:operation")).ResourceIds));
+            Assert.IsFalse((await GetRoleManager().GetAccessibleResources<MultiTenantRole, long, long>(claimStore, role, 1, "resource:operation")).HasAccessToAllResources);
         }
 
-        private RoleManager<Role> GetRoleManager()
+        private RoleManager<MultiTenantRole> GetRoleManager()
         {
-            var ret = serviceProvider.GetRequiredService(typeof(RoleManager<Role>)) as RoleManager<Role>;
+            var ret = serviceProvider.GetRequiredService(typeof(RoleManager<MultiTenantRole>)) as RoleManager<MultiTenantRole>;
 
             return ret;
         }

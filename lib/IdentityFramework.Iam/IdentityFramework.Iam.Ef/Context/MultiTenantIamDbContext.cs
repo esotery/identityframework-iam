@@ -65,7 +65,7 @@ namespace IdentityFramework.Iam.Ef.Context
                     .HasForeignKey(p => p.RoleId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
-
+            
             builder.Ignore<MultiTenantIdentityUserRole<TKey, TTenantKey>>();
             builder.Entity<MultiTenantIdentityUserRole<TKey, TTenantKey>>(action =>
             {

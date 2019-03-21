@@ -19,16 +19,18 @@ namespace IdentityFramework.Iam.Ef.Store
     /// <typeparam name="TRole">The type of the role.</typeparam>
     /// <typeparam name="TKey">The type of the key.</typeparam>
     /// <typeparam name="TTenantKey">The type of the tenant key.</typeparam>
+    /// <typeparam name="TMultiTenantContext">The type of the multi tenant context.</typeparam>
     /// <seealso cref="IdentityFramework.Iam.Core.Interface.IMultiTenantRoleClaimStore{TRole, TTenantKey}" />
-    public class MultiTenantRoleClaimStore<TUser, TRole, TKey, TTenantKey> : IMultiTenantRoleClaimStore<TRole, TTenantKey>
+    public class MultiTenantRoleClaimStore<TUser, TRole, TKey, TTenantKey, TMultiTenantContext> : IMultiTenantRoleClaimStore<TRole, TTenantKey>
         where TUser : IdentityUser<TKey>
         where TRole : IdentityRole<TKey>
         where TKey : IEquatable<TKey>
         where TTenantKey : IEquatable<TTenantKey>
+        where TMultiTenantContext : MultiTenantIamDbContext<TUser, TRole, TKey, TTenantKey>
     {
-        protected readonly MultiTenantIamDbContext<TUser, TRole, TKey, TTenantKey> _context;
+        protected readonly TMultiTenantContext _context;
 
-        public MultiTenantRoleClaimStore(MultiTenantIamDbContext<TUser, TRole, TKey, TTenantKey> context)
+        public MultiTenantRoleClaimStore(TMultiTenantContext context)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
         }

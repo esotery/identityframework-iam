@@ -18,16 +18,18 @@ namespace IdentityFramework.Iam.Ef.Store
     /// <typeparam name="TRole">The type of the role.</typeparam>
     /// <typeparam name="TKey">The type of the key.</typeparam>
     /// <typeparam name="TTenantKey">The type of the tenant key.</typeparam>
+    /// <typeparam name="TMultiTenantContext">The type of the multi tenant context.</typeparam>
     /// <seealso cref="IdentityFramework.Iam.Core.Interface.IMultiTenantUserRoleStore{TUser, TTenantKey}" />
-    public class MultiTenantUserRoleStore<TUser, TRole, TKey, TTenantKey> : IMultiTenantUserRoleStore<TUser, TTenantKey>
+    public class MultiTenantUserRoleStore<TUser, TRole, TKey, TTenantKey, TMultiTenantContext> : IMultiTenantUserRoleStore<TUser, TTenantKey>
         where TUser : IdentityUser<TKey>
         where TRole : IdentityRole<TKey>
         where TKey : IEquatable<TKey>
         where TTenantKey : IEquatable<TTenantKey>
+        where TMultiTenantContext : MultiTenantIamDbContext<TUser, TRole, TKey, TTenantKey>
     {
-        protected readonly MultiTenantIamDbContext<TUser, TRole, TKey, TTenantKey> _context;
+        protected readonly TMultiTenantContext _context;
 
-        public MultiTenantUserRoleStore(MultiTenantIamDbContext<TUser, TRole, TKey, TTenantKey> context)
+        public MultiTenantUserRoleStore(TMultiTenantContext context)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
         }
@@ -43,7 +45,7 @@ namespace IdentityFramework.Iam.Ef.Store
                 throw new ArgumentNullException(nameof(roleName));
             }
 
-            var roleEntity = await FindRoleAsync(roleName.ToUpper(), cancellationToken);
+            var roleEntity = await FindRoleAsync(roleName.ToUpper(), tenantId, cancellationToken);
             if (roleEntity == null)
             {
                 throw new InvalidOperationException(roleName);
@@ -87,7 +89,7 @@ namespace IdentityFramework.Iam.Ef.Store
                 throw new ArgumentNullException(nameof(roleName));
             }
 
-            var roleEntity = await FindRoleAsync(roleName.ToUpper(), cancellationToken);
+            var roleEntity = await FindRoleAsync(roleName.ToUpper(), tenantId, cancellationToken);
             if (roleEntity == null)
             {
                 throw new InvalidOperationException(roleName);
@@ -105,7 +107,7 @@ namespace IdentityFramework.Iam.Ef.Store
                 throw new ArgumentNullException(nameof(roleName));
             }
 
-            var roleEntity = await FindRoleAsync(roleName.ToUpper(), cancellationToken);
+            var roleEntity = await FindRoleAsync(roleName.ToUpper(), tenantId, cancellationToken);
             if (roleEntity == null)
             {
                 throw new InvalidOperationException(roleName);
@@ -126,7 +128,7 @@ namespace IdentityFramework.Iam.Ef.Store
                 throw new ArgumentNullException(nameof(roleName));
             }
 
-            var roleEntity = await FindRoleAsync(roleName.ToUpper(), cancellationToken);
+            var roleEntity = await FindRoleAsync(roleName.ToUpper(), tenantId, cancellationToken);
             if (roleEntity == null)
             {
                 throw new InvalidOperationException(roleName);
@@ -159,7 +161,7 @@ namespace IdentityFramework.Iam.Ef.Store
             }
             catch (DbUpdateConcurrencyException)
             {
-                
+
                 ret = IdentityResult.Failed(new IdentityErrorDescriber().ConcurrencyFailure());
             }
 
@@ -176,9 +178,43 @@ namespace IdentityFramework.Iam.Ef.Store
             };
         }
 
-        protected virtual Task<TRole> FindRoleAsync(string normalizedRoleName, CancellationToken cancellationToken)
+        protected virtual Task<TRole> FindRoleAsync(string normalizedRoleName, TTenantKey tenantId, CancellationToken cancellationToken)
         {
-            return _context.Roles.SingleOrDefaultAsync(r => r.NormalizedName == normalizedRoleName, cancellationToken);
+            Task<TRole> ret;
+
+            ret = _context.Roles.SingleOrDefaultAsync(r => r.NormalizedName == normalizedRoleName, cancellationToken);
+
+            return ret;
+        }
+    }
+
+    /// <summary>
+    /// EF implementation of extended user role store with multi tenant roles.
+    /// </summary>
+    /// <typeparam name="TUser">The type of the user.</typeparam>
+    /// <typeparam name="TRole">The type of the role.</typeparam>
+    /// <typeparam name="TKey">The type of the key.</typeparam>
+    /// <typeparam name="TTenantKey">The type of the tenant key.</typeparam>
+    /// <typeparam name="TMultiTenantContext">The type of the multi tenant context.</typeparam>
+    /// <seealso cref="IdentityFramework.Iam.Core.Interface.IMultiTenantUserRoleStore{TUser, TTenantKey}" />
+    public class MultiTenantMultiRoleUserRoleStore<TUser, TRole, TKey, TTenantKey, TMultiTenantContext> : MultiTenantUserRoleStore<TUser, TRole, TKey, TTenantKey, TMultiTenantContext>
+        where TUser : IdentityUser<TKey>
+        where TRole : MultiTenantIdentityRole<TKey, TTenantKey>
+        where TKey : IEquatable<TKey>
+        where TTenantKey : IEquatable<TTenantKey>
+        where TMultiTenantContext : MultiTenantMultiRoleIamDbContext<TUser, TRole, TKey, TTenantKey>
+    {
+        public MultiTenantMultiRoleUserRoleStore(TMultiTenantContext context) : base(context)
+        { 
+        }
+
+        protected override Task<TRole> FindRoleAsync(string normalizedRoleName, TTenantKey tenantId, CancellationToken cancellationToken)
+        {
+            Task<TRole> ret;
+
+            ret = _context.Roles.SingleOrDefaultAsync(r => r.NormalizedName == normalizedRoleName && r.TenantId.Equals(tenantId), cancellationToken);
+
+            return ret;
         }
     }
 }

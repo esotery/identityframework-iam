@@ -1,6 +1,7 @@
 ﻿using IdentityFramework.Iam.Core;
 using IdentityFramework.Iam.Core.Interface;
 using IdentityFramework.Iam.Ef.Context;
+using IdentityFramework.Iam.Ef.Model;
 using IdentityFramework.Iam.TestServer;
 using IdentityFramework.Iam.TestServer.Iam;
 using IdentityFramework.Iam.TestServer.Jwt;
@@ -38,8 +39,8 @@ namespace IdentityFramework.Iam.Ef.Test
                 })
                 .ConfigureTestServices(services =>
                 {
-                    services.AddIdentity<User, Role>()
-                        .AddEntityFrameworkStores<MultiTenantIamDbContext<User, Role, long, long>>()
+                    services.AddIdentity<User, MultiTenantRole>()
+                        .AddEntityFrameworkStores<MultiTenantMultiRoleIamDbContext<User, MultiTenantRole, long, long>>()
                         .AddDefaultTokenProviders();
 
                     services.AddAuthentication(options =>
@@ -58,10 +59,10 @@ namespace IdentityFramework.Iam.Ef.Test
 
                     services.AddMvc();
 
-                    services.AddMultiTenantIamEntifyFramework<User, Role, long, long>(options =>
+                    services.AddMultiTenantIamEntifyFrameworkWithMultiTenantRoles<User, MultiTenantRole, long, long>(options =>
                        options.UseSqlServer(ConfigurationHelper.GetConnectionString(true)));
                 }));
-            IdentityFramework.Iam.TestServer.Program.SeedMtData(server.Host.Services, typeof(MultiTenantIamDbContext<User, Role, long, long>), ConfigurationHelper.GetConnectionString(true));
+            IdentityFramework.Iam.TestServer.Program.SeedMtData(server.Host.Services, typeof(MultiTenantMultiRoleIamDbContext<User, MultiTenantRole, long, long>), ConfigurationHelper.GetConnectionString(true));
         }
 
         protected async Task<string> LoginUser(HttpClient client, string email, string password)

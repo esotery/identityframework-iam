@@ -1,4 +1,5 @@
 ﻿using IdentityFramework.Iam.Core.Interface;
+using IdentityFramework.Iam.Ef.Model;
 using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Concurrent;
@@ -12,7 +13,7 @@ namespace IdentityFramework.Iam.TestServer.Iam
 {
     public class MemoryMultiTenantStore<TUser, TRole, TKey, TTenantKey> : IMultiTenantUserClaimStore<TUser, TTenantKey>, IMultiTenantUserRoleStore<TUser, TTenantKey>, IMultiTenantRoleClaimStore<TRole, TTenantKey>
         where TUser : IdentityUser<TKey>
-        where TRole : IdentityRole<TKey>
+        where TRole : MultiTenantIdentityRole<TKey, TTenantKey>
         where TKey : IEquatable<TKey>
         where TTenantKey : IEquatable<TTenantKey>
     {

@@ -19,11 +19,12 @@ namespace IdentityFramework.Iam.Ef
     /// <typeparam name="TTenantKey">The type of the tenant key.</typeparam>
     /// <seealso cref="IdentityFramework.Iam.Ef.IamProviderBase{TKey}" />
     /// <seealso cref="IdentityFramework.Iam.Core.Interface.IMultiTenantIamProvider{TTenantKey}" />
-    public class MultiTenantIamProvider<TUser, TRole, TKey, TTenantKey> : IamProviderBase<TKey>, IMultiTenantIamProvider<TTenantKey> 
+    public class MultiTenantIamProvider<TUser, TRole, TKey, TTenantKey, TMultiTenantContext> : IamProviderBase<TKey>, IMultiTenantIamProvider<TTenantKey> 
         where TUser : IdentityUser<TKey> 
         where TRole : IdentityRole<TKey>
         where TKey : IEquatable<TKey>
         where TTenantKey : IEquatable<TTenantKey>
+        where TMultiTenantContext : MultiTenantIamDbContext<TUser, TRole, TKey, TTenantKey>
     {
         protected readonly IServiceProvider _serviceProvider;
 
@@ -455,9 +456,9 @@ namespace IdentityFramework.Iam.Ef
             }
         }
 
-        protected virtual MultiTenantIamDbContext<TUser, TRole, TKey, TTenantKey> GetContext(IServiceScope scope)
+        protected virtual TMultiTenantContext GetContext(IServiceScope scope)
         {
-            var ret = scope.ServiceProvider.GetRequiredService<MultiTenantIamDbContext<TUser, TRole, TKey, TTenantKey>>();
+            var ret = scope.ServiceProvider.GetRequiredService<TMultiTenantContext>();
 
             return ret;
         }

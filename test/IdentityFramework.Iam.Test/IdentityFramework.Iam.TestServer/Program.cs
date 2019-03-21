@@ -94,14 +94,14 @@ namespace IdentityFramework.Iam.TestServer
                 }
 
                 var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
-                var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<Role>>();
+                var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<MultiTenantRole>>();
                 var iamProvider = scope.ServiceProvider.GetRequiredService<IMultiTenantIamProvider<long>>();
                 var iamProviderCache = scope.ServiceProvider.GetRequiredService<IMultiTenantIamProviderCache<long>>();
                 var claimStore = scope.ServiceProvider.GetRequiredService<IMultiTenantUserClaimStore<User, long>>();
                 var roleStore = scope.ServiceProvider.GetRequiredService<IMultiTenantUserRoleStore<User, long>>();
-                var roleClaimStore = scope.ServiceProvider.GetRequiredService<IMultiTenantRoleClaimStore<Role, long>>();
+                var roleClaimStore = scope.ServiceProvider.GetRequiredService<IMultiTenantRoleClaimStore<MultiTenantRole, long>>();
 
-                AddRoles(roleManager, "Admin", "Manager", "User", "Viewer");
+                AddMtRoles(roleManager, new long[] { 1, 2 }, "Admin", "Manager", "User", "Viewer");
 
                 AddUserMt("admin.iam@iam.iam", "xyzIam345$", "Admin", new long[] { 1, 2 }, userManager, roleStore);
                 AddUserMt("manager.iam@iam.iam", "xyzIam345$", "Manager", new long[] { 1, 2 }, userManager, roleStore);
@@ -197,16 +197,36 @@ namespace IdentityFramework.Iam.TestServer
 
         private static void AddRoles(RoleManager<Role> roleManager, params string[] roles)
         {
-            foreach (var role in roles)
-            {
-                var result = roleManager.CreateAsync(new Role()
+                foreach (var role in roles)
                 {
-                    Name = role
-                }).Result;
+                    var result = roleManager.CreateAsync(new Role()
+                    {
+                        Name = role,
+                    }).Result;
 
-                if (!result.Succeeded)
+                    if (!result.Succeeded)
+                    {
+                        throw new Exception("Couldn't create role");
+                    }
+                }
+        }
+
+        private static void AddMtRoles(RoleManager<MultiTenantRole> roleManager, long[] tenants, params string[] roles)
+        {
+            foreach (var tenantId in tenants)
+            {
+                foreach (var role in roles)
                 {
-                    throw new Exception("Couldn't create role");
+                    var result = roleManager.CreateAsync(new MultiTenantRole()
+                    {
+                        Name = role,
+                        TenantId = tenantId
+                    }).Result;
+
+                    if (!result.Succeeded)
+                    {
+                        throw new Exception("Couldn't create role");
+                    }
                 }
             }
         }
@@ -310,7 +330,7 @@ namespace IdentityFramework.Iam.TestServer
             }
         }
 
-        private static void AddResourceIdAccessMt(string roleName, string[] policies, long[] tenantIds, RoleManager<Role> roleManager, IMultiTenantRoleClaimStore<Role, long> claimStore, bool hasAccessToAll, params long[] resourceIds)
+        private static void AddResourceIdAccessMt(string roleName, string[] policies, long[] tenantIds, RoleManager<MultiTenantRole> roleManager, IMultiTenantRoleClaimStore<MultiTenantRole, long> claimStore, bool hasAccessToAll, params long[] resourceIds)
         {
             var role = roleManager.FindByNameAsync(roleName).Result;
 
@@ -320,11 +340,11 @@ namespace IdentityFramework.Iam.TestServer
                 {
                     if (hasAccessToAll)
                     {
-                        roleManager.GrantAccessToAllResources<Role, long>(claimStore, role, tenantId, policy).Wait();
+                        roleManager.GrantAccessToAllResources<MultiTenantRole, long>(claimStore, role, tenantId, policy).Wait();
                     }
                     else
                     {
-                        roleManager.GrantAccessToResources<Role, long, long>(claimStore, role, tenantId, policy, resourceIds).Wait();
+                        roleManager.GrantAccessToResources<MultiTenantRole, long, long>(claimStore, role, tenantId, policy, resourceIds).Wait();
                     }
                 }
             }
