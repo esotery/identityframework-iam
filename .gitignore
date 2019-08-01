@@ -328,3 +328,10 @@ ASALocalRun/
 
 # MFractors (Xamarin productivity tool) working folder 
 .mfractor/
+/test/IdentityFramework.Iam.Test/IdentityFramework.Iam.Ef.Test/test.json
+/test/IdentityFramework.Iam.Test/IdentityFramework.Iam.Ef.Test/test.opencover.xml
+/test/IdentityFramework.Iam.Test/IdentityFramework.Iam.Ef.Test/reports
+/test/IdentityFramework.Iam.Test/IdentityFramework.Iam.Test/reports
+/test/IdentityFramework.Iam.Test/covres.opencover.xml
+/test/IdentityFramework.Iam.Test/test.opencover.xml
+/test/IdentityFramework.Iam.Test/IdentityFramework.Iam.Test/test.json

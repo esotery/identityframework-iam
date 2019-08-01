@@ -151,7 +151,17 @@ namespace IdentityFramework.Iam.Ef.Store
                 throw new ArgumentNullException(nameof(user));
             }
 
-            _context.Attach(user);
+            if (_context.Entry(user).State == EntityState.Detached)
+            {
+                if (_context.Set<TUser>().Local.Any(x => x.Id.Equals(user.Id)))
+                {
+                    user = _context.Set<TUser>().Local.FirstOrDefault(x => x.Id.Equals(user.Id));
+                }
+                else
+                {
+                    _context.Attach(user);
+                }
+            }
             user.ConcurrencyStamp = Guid.NewGuid().ToString();
             _context.Update(user);
 

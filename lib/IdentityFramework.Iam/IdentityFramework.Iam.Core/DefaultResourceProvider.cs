@@ -44,18 +44,8 @@ namespace IdentityFramework.Iam.Core
                 }
             }
 
-            if (ret.Equals(default(TResourceKey)))
-            {
-                var resourceIdStr = _accessor.HttpContext?.Request?.Query[_options.ParamName].ToArray().FirstOrDefault() ?? "";
-
-                try
-                {
-                    ret = (TResourceKey)Convert.ChangeType(resourceIdStr, typeof(TResourceKey));
-                }
-                catch
-                {
-                }
-            }
+            ret = GetResourceKeyFrom(ret, _accessor, x => x.HttpContext?.Request?.Query[_options.ParamName].ToArray().FirstOrDefault() ?? "");
+            ret = GetResourceKeyFrom(ret, _accessor, x => x.HttpContext?.Request?.Headers[_options.ParamName].ToArray().FirstOrDefault() ?? "");
 
             return Task.FromResult(ret);
         }
@@ -71,9 +61,33 @@ namespace IdentityFramework.Iam.Core
                 ret = routeData.Values.ContainsKey(_options.ParamName);
             }
 
-            ret = ret || !string.IsNullOrEmpty(_accessor.HttpContext?.Request?.Query[_options.ParamName].ToArray().FirstOrDefault());
+            ret = ret || !string.IsNullOrEmpty(_accessor.HttpContext?.Request?.Query[_options.ParamName].ToArray().FirstOrDefault()) || !string.IsNullOrEmpty(_accessor.HttpContext?.Request?.Headers[_options.ParamName].ToArray().FirstOrDefault());
 
             return Task.FromResult(ret);
+        }
+
+        private TResourceKey GetResourceKeyFrom(TResourceKey currentVal, IHttpContextAccessor accessor, Func<IHttpContextAccessor, string> func)
+        {
+            TResourceKey ret = default(TResourceKey);
+
+            if (currentVal.Equals(default(TResourceKey)))
+            {
+                var resourceIdStr = func.Invoke(accessor);
+
+                try
+                {
+                    ret = (TResourceKey)Convert.ChangeType(resourceIdStr, typeof(TResourceKey));
+                }
+                catch
+                {
+                }
+            }
+            else
+            {
+                ret = currentVal;
+            }
+
+            return ret;
         }
     }
 }

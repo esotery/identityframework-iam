@@ -998,6 +998,7 @@ namespace IdentityFramework.Iam.Core
 
             if (roleClaims != null)
             {
+                claimsIdentity.AddClaims(roleClaims.Where(x => x.Type.StartsWith(Constants.POLICY_CLAIM_TYPE)).Select(fakeRole => new Claim(ClaimTypes.Role, fakeRole.Value)));
                 claimsIdentity.AddClaims(roleClaims.Where(x => x.Type.StartsWith(Constants.RESOURCE_ID_CLAIM_TYPE)).Select(resourceIds => new Claim(resourceIds.Type, resourceIds.Value)));
             }
         }
@@ -1013,19 +1014,25 @@ namespace IdentityFramework.Iam.Core
         public static void AddIamClaims<TTenantKey>(this ClaimsIdentity claimsIdentity, IDictionary<TTenantKey, IList<string>> roles, IDictionary<TTenantKey, IList<Claim>> claims, IDictionary<TTenantKey, IList<Claim>> roleClaims = null)
              where TTenantKey : IEquatable<TTenantKey>
         {
-            foreach (var tenant in roles.Keys)
+            if (roles != null)
             {
-                var _roles = roles[tenant];
+                foreach (var tenant in roles.Keys)
+                {
+                    var _roles = roles[tenant];
 
-                claimsIdentity.AddClaims(_roles.Select(role => new Claim(ClaimTypes.Role, role.ToMultiTenantRoleName(tenant))));
+                    claimsIdentity.AddClaims(_roles.Select(role => new Claim(ClaimTypes.Role, role.ToMultiTenantRoleName(tenant))));
+                }
             }
 
-            foreach (var tenant in claims.Keys)
+            if (claims != null)
             {
-                var _claims = claims[tenant];
+                foreach (var tenant in claims.Keys)
+                {
+                    var _claims = claims[tenant];
 
-                claimsIdentity.AddClaims(_claims.Where(x => x.Type == Constants.POLICY_CLAIM_TYPE).Select(fakeRole => new Claim(ClaimTypes.Role, fakeRole.Value.ToMultiTenantRoleName(tenant))));
-                claimsIdentity.AddClaims(_claims.Where(x => x.Type.StartsWith(Constants.RESOURCE_ID_CLAIM_TYPE)).Select(resourceIds => new Claim(resourceIds.Type, resourceIds.Value.ToMultiTenantResourceIds(tenant))));
+                    claimsIdentity.AddClaims(_claims.Where(x => x.Type == Constants.POLICY_CLAIM_TYPE).Select(fakeRole => new Claim(ClaimTypes.Role, fakeRole.Value.ToMultiTenantRoleName(tenant))));
+                    claimsIdentity.AddClaims(_claims.Where(x => x.Type.StartsWith(Constants.RESOURCE_ID_CLAIM_TYPE)).Select(resourceIds => new Claim(resourceIds.Type, resourceIds.Value.ToMultiTenantResourceIds(tenant))));
+                }
             }
 
             if (roleClaims != null)
@@ -1034,6 +1041,7 @@ namespace IdentityFramework.Iam.Core
                 {
                     var _claims = roleClaims[tenant];
 
+                    claimsIdentity.AddClaims(_claims.Where(x => x.Type == Constants.POLICY_CLAIM_TYPE).Select(fakeRole => new Claim(ClaimTypes.Role, fakeRole.Value.ToMultiTenantRoleName(tenant))));
                     claimsIdentity.AddClaims(_claims.Where(x => x.Type.StartsWith(Constants.RESOURCE_ID_CLAIM_TYPE)).Select(resourceIds => new Claim(resourceIds.Type, resourceIds.Value.ToMultiTenantResourceIds(tenant))));
                 }
             }

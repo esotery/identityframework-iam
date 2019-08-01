@@ -119,7 +119,17 @@ namespace IdentityFramework.Iam.Ef.Store
                 throw new ArgumentNullException(nameof(role));
             }
 
-            _context.Attach(role);
+            if (_context.Entry(role).State == EntityState.Detached)
+            {
+                if (_context.Set<TRole>().Local.Any(x => x.Id.Equals(role.Id)))
+                {
+                    role = _context.Set<TRole>().Local.FirstOrDefault(x => x.Id.Equals(role.Id));
+                }
+                else
+                {
+                    _context.Attach(role);
+                }
+            }
             role.ConcurrencyStamp = Guid.NewGuid().ToString();
             _context.Update(role);
 

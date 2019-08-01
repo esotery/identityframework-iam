@@ -6,6 +6,8 @@ using IdentityFramework.Iam.TestServer.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Debug;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Respawn;
 using System.Collections.Generic;
@@ -46,7 +48,9 @@ namespace IdentityFramework.Iam.Ef.Test
             services.AddMultiTenantIamCore<long>();
 
             services.AddDbContext<MultiTenantMultiRoleIamDbContext<User, MultiTenantRole, long, long>>(options =>
-                options.UseSqlServer(connectionString));
+                {
+                    options.UseSqlServer(connectionString);
+                });
 
             serviceProvider = services.BuildServiceProvider();
 
@@ -110,6 +114,21 @@ namespace IdentityFramework.Iam.Ef.Test
 
             Assert.AreEqual("1,2,3", string.Join(',', (await GetRoleManager().GetAccessibleResources<MultiTenantRole, long, long>(claimStore, role, 1, "resource:operation")).ResourceIds));
             Assert.IsFalse((await GetRoleManager().GetAccessibleResources<MultiTenantRole, long, long>(claimStore, role, 1, "resource:operation")).HasAccessToAllResources);
+        }
+
+        [TestMethod]
+        public async Task FindByNameTest()
+        {
+            var res = await GetRoleManager().CreateAsync(new MultiTenantRole()
+            {
+                Name = "admin",
+                TenantId = 1
+            }
+            );
+
+            Assert.IsTrue(res.Succeeded);
+            Assert.IsNull(await GetRoleManager().FindByName<MultiTenantRole, long>("admin", 2));
+            Assert.IsNotNull(await GetRoleManager().FindByName<MultiTenantRole, long>("admin", 1));
         }
 
         private RoleManager<MultiTenantRole> GetRoleManager()

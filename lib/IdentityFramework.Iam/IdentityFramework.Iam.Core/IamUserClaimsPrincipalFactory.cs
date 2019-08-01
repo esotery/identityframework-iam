@@ -27,10 +27,13 @@ namespace IdentityFramework.Iam.Core
 
             var roleClaims = new List<Claim>();
 
-            foreach (var role in roles)
+            if (roles != null)
             {
-                var _role = await _roleManager.FindByNameAsync(role);
-                roleClaims.AddRange(await _roleManager.GetClaimsAsync(_role));
+                foreach (var role in roles)
+                {
+                    var _role = await _roleManager.FindByNameAsync(role);
+                    roleClaims.AddRange(await _roleManager.GetClaimsAsync(_role));
+                }
             }
 
             var userClaims = await _userManager.GetClaimsAsync(user);

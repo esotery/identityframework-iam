@@ -101,6 +101,14 @@ namespace IdentityFramework.Iam.Test
             Assert.IsFalse((await GetRoleManager().GetAccessibleResources<MultiTenantRole, long, long>(claimStore, role, 1, "resource:operation")).HasAccessToAllResources);
         }
 
+        [TestMethod]
+        public async Task GetClaimsTest()
+        {
+            await GetRoleManager().GrantAccessToResources<MultiTenantRole, long, long>(claimStore, role, 1, "resource:operation", 1, 2, 3);
+
+            Assert.AreEqual("iam:resource_id:resource:operation: 1,2,3", string.Join(',', (await GetRoleManager().GetClaimsAsync<MultiTenantRole, long>(claimStore, role, 1))));
+        }
+
         private RoleManager<MultiTenantRole> GetRoleManager()
         {
             var ret = serviceProvider.GetRequiredService(typeof(RoleManager<MultiTenantRole>)) as RoleManager<MultiTenantRole>;

@@ -240,6 +240,23 @@ namespace IdentityFramework.Iam.Test
         }
 
         [TestMethod]
+        public async Task GetClaimsTest()
+        {
+            await GetUserManager().AttachPoliciesAsync(claimStore, user, 1, "resource:operation", "resource:otheroperation");
+
+            Assert.AreEqual("resource:operation,resource:otheroperation", string.Join(',', GetUserManager().GetClaimsAsync(claimStore, user, 1).Result.OrderBy(x => x.Value).Select(x => x.Value)));
+        }
+
+        [TestMethod]
+        public async Task GetClaimsAcrossTenantsTest()
+        {
+            await GetUserManager().AttachPoliciesAsync(claimStore, user, 1, "resource:operation");
+            await GetUserManager().AttachPoliciesAsync(claimStore, user, 2, "resource:otheroperation");
+
+            Assert.AreEqual("resource:operation,resource:otheroperation", string.Join(',', GetUserManager().GetClaimsAsync(claimStore, user).Result.SelectMany(x => x.Value.Select(y => y.Value))));
+        }
+
+        [TestMethod]
         public async Task GetAllAttachedPoliciesTest()
         {
             await GetUserManager().AttachPoliciesAsync(claimStore, user, 1, "resource:operation", "resource:otheroperation");

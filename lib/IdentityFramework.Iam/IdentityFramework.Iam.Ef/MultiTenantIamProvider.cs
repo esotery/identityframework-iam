@@ -129,7 +129,7 @@ namespace IdentityFramework.Iam.Ef
 
             foreach (var policyName in _policies)
             {
-                existingPolicies.Add(policyName, string.IsNullOrEmpty(cache.GetClaim(policyName, tenantId)));
+                existingPolicies.Add(policyName, !string.IsNullOrEmpty(cache.GetClaim(policyName, tenantId)));
             }
 
             var policiesToAdd = existingPolicies.Where(x => !x.Value).Select(x => x.Key);

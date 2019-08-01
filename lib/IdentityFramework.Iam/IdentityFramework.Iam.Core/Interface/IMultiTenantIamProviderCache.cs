@@ -88,5 +88,7 @@ namespace IdentityFramework.Iam.Core.Interface
         /// <param name="tenantId">The tenant identifier.</param>
         /// <returns></returns>
         bool NeedsUpdate(string policyName, TTenantKey tenantId);
+
+        void InvalidateCache();
     }
 }

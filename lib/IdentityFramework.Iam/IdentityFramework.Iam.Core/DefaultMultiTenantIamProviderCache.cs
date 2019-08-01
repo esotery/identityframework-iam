@@ -55,6 +55,13 @@ namespace IdentityFramework.Iam.Core
             _requireResourceIdAccess = new ConcurrentDictionary<Key<TTenantKey>, bool>();
         }
 
+        public void InvalidateCache()
+        {
+            _roles.Clear();
+            _claims.Clear();
+            _requireResourceIdAccess.Clear();
+        }
+
         public bool? IsResourceIdAccessRequired(string policyName, TTenantKey tenantId)
         {
             bool? ret = null;

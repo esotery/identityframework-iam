@@ -15,7 +15,7 @@ namespace IdentityFramework.Iam.Ef
     public class IamProviderBase<TKey>
         where TKey : IEquatable<TKey>
     {
-        private readonly ConcurrentDictionary<string, TKey> _cache;
+        protected readonly ConcurrentDictionary<string, TKey> _cache;
 
         public IamProviderBase()
         {

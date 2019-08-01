@@ -59,75 +59,103 @@ namespace IdentityFramework.Iam.Ef.Test
             {
                 UserName = "test",
             }).Wait();
-
-            user = userManager.FindByNameAsync("test").Result;
         }
 
         [TestMethod]
         public async Task AttachPolicyTest()
         {
-           await GetUserManager().AttachPolicyAsync(user, "resource:operation");
+            using (var scope = serviceProvider.CreateScope())
+            {
+                user = await GetUserManager(scope).FindByNameAsync("test");
 
-           Assert.IsNotNull(GetUserManager().GetClaimsAsync(user).Result.FirstOrDefault(x => x.Type == Constants.POLICY_CLAIM_TYPE && x.Value == "resource:operation"));
+                await GetUserManager(scope).AttachPolicyAsync(user, "resource:operation");
+
+                Assert.IsNotNull(GetUserManager(scope).GetClaimsAsync(user).Result.FirstOrDefault(x => x.Type == Constants.POLICY_CLAIM_TYPE && x.Value == "resource:operation"));
+            }
         }
 
         [TestMethod]
         public async Task AttachPoliciesTest()
         {
-            await GetUserManager().AttachPoliciesAsync(user, "resource:operation", "resource:otheroperation");
+            using (var scope = serviceProvider.CreateScope())
+            {
+                user = await GetUserManager(scope).FindByNameAsync("test");
 
-            Assert.IsNotNull(GetUserManager().GetClaimsAsync(user).Result.FirstOrDefault(x => x.Type == Constants.POLICY_CLAIM_TYPE && x.Value == "resource:operation"));
-            Assert.IsNotNull(GetUserManager().GetClaimsAsync(user).Result.FirstOrDefault(x => x.Type == Constants.POLICY_CLAIM_TYPE && x.Value == "resource:otheroperation"));
+                await GetUserManager(scope).AttachPoliciesAsync(user, "resource:operation", "resource:otheroperation");
+
+                Assert.IsNotNull(GetUserManager(scope).GetClaimsAsync(user).Result.FirstOrDefault(x => x.Type == Constants.POLICY_CLAIM_TYPE && x.Value == "resource:operation"));
+                Assert.IsNotNull(GetUserManager(scope).GetClaimsAsync(user).Result.FirstOrDefault(x => x.Type == Constants.POLICY_CLAIM_TYPE && x.Value == "resource:otheroperation"));
+            }
         }
 
         [TestMethod]
         public async Task DetachPolicyTest()
         {
-            await GetUserManager().AttachPolicyAsync(user, "resource:operation");
+            using (var scope = serviceProvider.CreateScope())
+            {
+                user = await GetUserManager(scope).FindByNameAsync("test");
 
-            Assert.IsNotNull(GetUserManager().GetClaimsAsync(user).Result.FirstOrDefault(x => x.Type == Constants.POLICY_CLAIM_TYPE && x.Value == "resource:operation"));
+                await GetUserManager(scope).AttachPolicyAsync(user, "resource:operation");
 
-            await GetUserManager().DetachPolicyAsync(user, "resource:operation");
+                Assert.IsNotNull(GetUserManager(scope).GetClaimsAsync(user).Result.FirstOrDefault(x => x.Type == Constants.POLICY_CLAIM_TYPE && x.Value == "resource:operation"));
 
-            Assert.IsNull(GetUserManager().GetClaimsAsync(user).Result.FirstOrDefault(x => x.Type == Constants.POLICY_CLAIM_TYPE && x.Value == "resource:operation"));
+                await GetUserManager(scope).DetachPolicyAsync(user, "resource:operation");
+
+                Assert.IsNull(GetUserManager(scope).GetClaimsAsync(user).Result.FirstOrDefault(x => x.Type == Constants.POLICY_CLAIM_TYPE && x.Value == "resource:operation"));
+            }
         }
 
 
         [TestMethod]
         public async Task DetachPoliciesTest()
         {
-            await GetUserManager().AttachPoliciesAsync(user, "resource:operation", "resource:otheroperation");
+            using (var scope = serviceProvider.CreateScope())
+            {
+                user = await GetUserManager(scope).FindByNameAsync("test");
 
-            Assert.IsNotNull(GetUserManager().GetClaimsAsync(user).Result.FirstOrDefault(x => x.Type == Constants.POLICY_CLAIM_TYPE && x.Value == "resource:operation"));
-            Assert.IsNotNull(GetUserManager().GetClaimsAsync(user).Result.FirstOrDefault(x => x.Type == Constants.POLICY_CLAIM_TYPE && x.Value == "resource:otheroperation"));
+                await GetUserManager(scope).AttachPoliciesAsync(user, "resource:operation", "resource:otheroperation");
 
-            await GetUserManager().DetachPoliciesAsync(user, "resource:operation", "resource:otheroperation");
+                Assert.IsNotNull(GetUserManager(scope).GetClaimsAsync(user).Result.FirstOrDefault(x => x.Type == Constants.POLICY_CLAIM_TYPE && x.Value == "resource:operation"));
+                Assert.IsNotNull(GetUserManager(scope).GetClaimsAsync(user).Result.FirstOrDefault(x => x.Type == Constants.POLICY_CLAIM_TYPE && x.Value == "resource:otheroperation"));
 
-            Assert.IsNull(GetUserManager().GetClaimsAsync(user).Result.FirstOrDefault(x => x.Type == Constants.POLICY_CLAIM_TYPE && x.Value == "resource:operation"));
-            Assert.IsNull(GetUserManager().GetClaimsAsync(user).Result.FirstOrDefault(x => x.Type == Constants.POLICY_CLAIM_TYPE && x.Value == "resource:otheroperation"));
+                await GetUserManager(scope).DetachPoliciesAsync(user, "resource:operation", "resource:otheroperation");
+
+                Assert.IsNull(GetUserManager(scope).GetClaimsAsync(user).Result.FirstOrDefault(x => x.Type == Constants.POLICY_CLAIM_TYPE && x.Value == "resource:operation"));
+                Assert.IsNull(GetUserManager(scope).GetClaimsAsync(user).Result.FirstOrDefault(x => x.Type == Constants.POLICY_CLAIM_TYPE && x.Value == "resource:otheroperation"));
+            }
         }
 
         [TestMethod]
         public async Task GetAttachedPoliciesTest()
         {
-            await GetUserManager().AttachPoliciesAsync(user, "resource:operation", "resource:otheroperation");
+            using (var scope = serviceProvider.CreateScope())
+            {
+                user = await GetUserManager(scope).FindByNameAsync("test");
 
-            Assert.IsNotNull(GetUserManager().GetAttachedPoliciesAsync(user).Result.FirstOrDefault(x => x == "resource:operation"));
-            Assert.IsNotNull(GetUserManager().GetAttachedPoliciesAsync(user).Result.FirstOrDefault(x => x == "resource:otheroperation"));
+                await GetUserManager(scope).AttachPoliciesAsync(user, "resource:operation", "resource:otheroperation");
+
+                Assert.IsNotNull(GetUserManager(scope).GetAttachedPoliciesAsync(user).Result.FirstOrDefault(x => x == "resource:operation"));
+                Assert.IsNotNull(GetUserManager(scope).GetAttachedPoliciesAsync(user).Result.FirstOrDefault(x => x == "resource:otheroperation"));
+            }
         }
 
         [TestMethod]
         public async Task GetUsersAttachedToPolicyTest()
         {
-            await GetUserManager().AttachPoliciesAsync(user, "resource:operation", "resource:otheroperation");
+            using (var scope = serviceProvider.CreateScope())
+            {
+                user = await GetUserManager(scope).FindByNameAsync("test");
 
-            Assert.IsNotNull(GetUserManager().GetUsersAttachedToPolicyAsync("resource:operation").Result.FirstOrDefault(x => x.Id == user.Id));
-            Assert.IsNotNull(GetUserManager().GetUsersAttachedToPolicyAsync("resource:otheroperation").Result.FirstOrDefault(x => x.Id == user.Id));
+                await GetUserManager(scope).AttachPoliciesAsync(user, "resource:operation", "resource:otheroperation");
+
+                Assert.IsNotNull(GetUserManager(scope).GetUsersAttachedToPolicyAsync("resource:operation").Result.FirstOrDefault(x => x.Id == user.Id));
+                Assert.IsNotNull(GetUserManager(scope).GetUsersAttachedToPolicyAsync("resource:otheroperation").Result.FirstOrDefault(x => x.Id == user.Id));
+            }
         }
 
-        private UserManager<User> GetUserManager()
+        private UserManager<User> GetUserManager(IServiceScope scope)
         {
-            var ret = serviceProvider.GetRequiredService(typeof(UserManager<User>)) as UserManager<User>;
+            var ret = scope.ServiceProvider.GetRequiredService(typeof(UserManager<User>)) as UserManager<User>;
 
             return ret;
         }

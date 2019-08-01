@@ -105,165 +105,227 @@ namespace IdentityFramework.Iam.Ef.Test
         [TestMethod]
         public async Task AddToRoleTest()
         {
-            await GetUserManager().AddToRoleAsync(roleStore, user, 1, "admin");
+            using (var scope = serviceProvider.CreateScope())
+            {
+                await GetUserManager(scope).AddToRoleAsync(roleStore, user, 1, "admin");
 
-            Assert.IsNotNull(GetUserManager().GetRolesAsync(roleStore, user, 1).Result.FirstOrDefault(x => x == "admin"));
+                Assert.IsNotNull(GetUserManager(scope).GetRolesAsync(roleStore, user, 1).Result.FirstOrDefault(x => x == "admin"));
+            }
         }
 
         [TestMethod]
         public async Task AddToRolesTest()
         {
-            await GetUserManager().AddToRolesAsync(roleStore, user, 1, "admin", "manager");
+            using (var scope = serviceProvider.CreateScope())
+            {
+                await GetUserManager(scope).AddToRolesAsync(roleStore, user, 1, "admin", "manager");
 
-            Assert.IsTrue(GetUserManager().GetRolesAsync(roleStore, user, 1).Result.Contains("admin"));
-            Assert.IsTrue(GetUserManager().GetRolesAsync(roleStore, user, 1).Result.Contains("manager"));
+                Assert.IsTrue(GetUserManager(scope).GetRolesAsync(roleStore, user, 1).Result.Contains("admin"));
+                Assert.IsTrue(GetUserManager(scope).GetRolesAsync(roleStore, user, 1).Result.Contains("manager"));
+            }
         }
 
         [TestMethod]
         public async Task RemoveFromRoleTest()
         {
-            await GetUserManager().AddToRoleAsync(roleStore, user, 1, "admin");
+            using (var scope = serviceProvider.CreateScope())
+            {
+                await GetUserManager(scope).AddToRoleAsync(roleStore, user, 1, "admin");
 
-            Assert.IsNotNull(GetUserManager().GetRolesAsync(roleStore, user, 1).Result.FirstOrDefault(x => x == "admin"));
+                Assert.IsNotNull(GetUserManager(scope).GetRolesAsync(roleStore, user, 1).Result.FirstOrDefault(x => x == "admin"));
 
-            await GetUserManager().RemoveFromRoleAsync(roleStore, user, 1, "admin");
+                await GetUserManager(scope).RemoveFromRoleAsync(roleStore, user, 1, "admin");
 
-            Assert.IsNull(GetUserManager().GetRolesAsync(roleStore, user, 1).Result.FirstOrDefault(x => x == "admin"));
+                Assert.IsNull(GetUserManager(scope).GetRolesAsync(roleStore, user, 1).Result.FirstOrDefault(x => x == "admin"));
+            }
         }
 
         [TestMethod]
         public async Task RemoveFromRolesTest()
         {
-            await GetUserManager().AddToRolesAsync(roleStore, user, 1, "admin", "manager");
+            using (var scope = serviceProvider.CreateScope())
+            {
+                await GetUserManager(scope).AddToRolesAsync(roleStore, user, 1, "admin", "manager");
 
-            Assert.IsTrue(GetUserManager().GetRolesAsync(roleStore, user, 1).Result.Contains("admin"));
-            Assert.IsTrue(GetUserManager().GetRolesAsync(roleStore, user, 1).Result.Contains("manager"));
+                Assert.IsTrue(GetUserManager(scope).GetRolesAsync(roleStore, user, 1).Result.Contains("admin"));
+                Assert.IsTrue(GetUserManager(scope).GetRolesAsync(roleStore, user, 1).Result.Contains("manager"));
 
-            await GetUserManager().RemoveFromRolesAsync(roleStore, user, 1, "admin", "manager");
+                await GetUserManager(scope).RemoveFromRolesAsync(roleStore, user, 1, "admin", "manager");
 
-            Assert.IsFalse(GetUserManager().GetRolesAsync(roleStore, user, 1).Result.Contains("admin"));
-            Assert.IsFalse(GetUserManager().GetRolesAsync(roleStore, user, 1).Result.Contains("manager"));
+                Assert.IsFalse(GetUserManager(scope).GetRolesAsync(roleStore, user, 1).Result.Contains("admin"));
+                Assert.IsFalse(GetUserManager(scope).GetRolesAsync(roleStore, user, 1).Result.Contains("manager"));
+            }
         }
 
         [TestMethod]
         public async Task IsInRoleTest()
         {
-            await GetUserManager().AddToRolesAsync(roleStore, user, 1, "admin", "manager");
+            using (var scope = serviceProvider.CreateScope())
+            {
+                await GetUserManager(scope).AddToRolesAsync(roleStore, user, 1, "admin", "manager");
 
-            Assert.IsTrue(GetUserManager().IsInRoleAsync(roleStore, user, 1, "admin").Result);
-            Assert.IsTrue(GetUserManager().IsInRoleAsync(roleStore, user, 1, "manager").Result);
+                Assert.IsTrue(GetUserManager(scope).IsInRoleAsync(roleStore, user, 1, "admin").Result);
+                Assert.IsTrue(GetUserManager(scope).IsInRoleAsync(roleStore, user, 1, "manager").Result);
+            }
         }
 
         [TestMethod]
         public async Task GetRolesTest()
         {
-            await GetUserManager().AddToRolesAsync(roleStore, user, 1, "admin", "manager");
+            using (var scope = serviceProvider.CreateScope())
+            {
+                await GetUserManager(scope).AddToRolesAsync(roleStore, user, 1, "admin", "manager");
 
-            Assert.IsTrue(GetUserManager().GetRolesAsync(roleStore, user, 1).Result.Contains("admin"));
-            Assert.IsTrue(GetUserManager().GetRolesAsync(roleStore, user, 1).Result.Contains("manager"));
+                Assert.IsTrue(GetUserManager(scope).GetRolesAsync(roleStore, user, 1).Result.Contains("admin"));
+                Assert.IsTrue(GetUserManager(scope).GetRolesAsync(roleStore, user, 1).Result.Contains("manager"));
+            }
         }
 
         [TestMethod]
         public async Task GetAllRolesTest()
         {
-            await GetUserManager().AddToRolesAsync(roleStore, user, 1, "admin", "manager");
-            await GetUserManager().AddToRolesAsync(roleStore, user, 2, "admin");
+            using (var scope = serviceProvider.CreateScope())
+            {
+                await GetUserManager(scope).AddToRolesAsync(roleStore, user, 1, "admin", "manager");
+                await GetUserManager(scope).AddToRolesAsync(roleStore, user, 2, "admin");
 
-            var roles = GetUserManager().GetRolesAsync(roleStore, user).Result;
+                var roles = GetUserManager(scope).GetRolesAsync(roleStore, user).Result;
 
-            Assert.IsTrue(roles[1].Contains("admin"));
-            Assert.IsTrue(roles[1].Contains("manager"));
-            Assert.IsTrue(roles[2].Contains("admin"));
-            Assert.IsFalse(roles[2].Contains("manager"));
+                Assert.IsTrue(roles[1].Contains("admin"));
+                Assert.IsTrue(roles[1].Contains("manager"));
+                Assert.IsTrue(roles[2].Contains("admin"));
+                Assert.IsFalse(roles[2].Contains("manager"));
+            }
         }
 
         [TestMethod]
         public async Task GetUsersInRoleTest()
         {
-            await GetUserManager().AddToRolesAsync(roleStore, user, 1, "admin", "manager");
+            using (var scope = serviceProvider.CreateScope())
+            {
+                await GetUserManager(scope).AddToRolesAsync(roleStore, user, 1, "admin", "manager");
 
-            Assert.IsNotNull(GetUserManager().GetUsersInRoleAsync(roleStore, "admin", 1).Result.FirstOrDefault(x => x.Id == user.Id));
-            Assert.IsNotNull(GetUserManager().GetUsersInRoleAsync(roleStore, "manager", 1).Result.FirstOrDefault(x => x.Id == user.Id));
+                Assert.IsNotNull(GetUserManager(scope).GetUsersInRoleAsync(roleStore, "admin", 1).Result.FirstOrDefault(x => x.Id == user.Id));
+                Assert.IsNotNull(GetUserManager(scope).GetUsersInRoleAsync(roleStore, "manager", 1).Result.FirstOrDefault(x => x.Id == user.Id));
+            }
         }
 
         [TestMethod]
         public async Task AttachPolicyTest()
         {
-           await GetUserManager().AttachPolicyAsync(claimStore, user, 1, "resource:operation");
+            using (var scope = serviceProvider.CreateScope())
+            {
+                await GetUserManager(scope).AttachPolicyAsync(claimStore, user, 1, "resource:operation");
 
-           Assert.IsNotNull(GetUserManager().GetAttachedPoliciesAsync(claimStore, user, 1).Result.FirstOrDefault(x => x == "resource:operation"));
+                Assert.IsNotNull(GetUserManager(scope).GetAttachedPoliciesAsync(claimStore, user, 1).Result.FirstOrDefault(x => x == "resource:operation"));
+            }
         }
 
         [TestMethod]
         public async Task AttachPoliciesTest()
         {
-            await GetUserManager().AttachPoliciesAsync(claimStore, user, 1, "resource:operation", "resource:otheroperation");
+            using (var scope = serviceProvider.CreateScope())
+            {
+                await GetUserManager(scope).AttachPoliciesAsync(claimStore, user, 1, "resource:operation", "resource:otheroperation");
 
-            Assert.IsNotNull(GetUserManager().GetAttachedPoliciesAsync(claimStore, user, 1).Result.FirstOrDefault(x => x == "resource:operation"));
-            Assert.IsNotNull(GetUserManager().GetAttachedPoliciesAsync(claimStore, user, 1).Result.FirstOrDefault(x => x == "resource:otheroperation"));
+                Assert.IsNotNull(GetUserManager(scope).GetAttachedPoliciesAsync(claimStore, user, 1).Result.FirstOrDefault(x => x == "resource:operation"));
+                Assert.IsNotNull(GetUserManager(scope).GetAttachedPoliciesAsync(claimStore, user, 1).Result.FirstOrDefault(x => x == "resource:otheroperation"));
+            }
         }
 
         [TestMethod]
         public async Task DetachPolicyTest()
         {
-            await GetUserManager().AttachPolicyAsync(claimStore, user, 1, "resource:operation");
+            using (var scope = serviceProvider.CreateScope())
+            {
+                await GetUserManager(scope).AttachPolicyAsync(claimStore, user, 1, "resource:operation");
 
-            Assert.IsNotNull(GetUserManager().GetAttachedPoliciesAsync(claimStore, user, 1).Result.FirstOrDefault(x => x == "resource:operation"));
+                Assert.IsNotNull(GetUserManager(scope).GetAttachedPoliciesAsync(claimStore, user, 1).Result.FirstOrDefault(x => x == "resource:operation"));
 
-            await GetUserManager().DetachPolicyAsync(claimStore, user, 1, "resource:operation");
+                await GetUserManager(scope).DetachPolicyAsync(claimStore, user, 1, "resource:operation");
 
-            Assert.IsNull(GetUserManager().GetAttachedPoliciesAsync(claimStore, user, 1).Result.FirstOrDefault(x => x == "resource:operation"));
+                Assert.IsNull(GetUserManager(scope).GetAttachedPoliciesAsync(claimStore, user, 1).Result.FirstOrDefault(x => x == "resource:operation"));
+            }
         }
 
         [TestMethod]
         public async Task DetachPoliciesTest()
         {
-            await GetUserManager().AttachPoliciesAsync(claimStore, user, 1, "resource:operation", "resource:otheroperation");
+            using (var scope = serviceProvider.CreateScope())
+            {
+                await GetUserManager(scope).AttachPoliciesAsync(claimStore, user, 1, "resource:operation", "resource:otheroperation");
 
-            Assert.IsNotNull(GetUserManager().GetAttachedPoliciesAsync(claimStore, user, 1).Result.FirstOrDefault(x => x == "resource:operation"));
-            Assert.IsNotNull(GetUserManager().GetAttachedPoliciesAsync(claimStore, user, 1).Result.FirstOrDefault(x => x == "resource:otheroperation"));
+                Assert.IsNotNull(GetUserManager(scope).GetAttachedPoliciesAsync(claimStore, user, 1).Result.FirstOrDefault(x => x == "resource:operation"));
+                Assert.IsNotNull(GetUserManager(scope).GetAttachedPoliciesAsync(claimStore, user, 1).Result.FirstOrDefault(x => x == "resource:otheroperation"));
 
-            await GetUserManager().DetachPoliciesAsync(claimStore, user, 1, "resource:operation", "resource:otheroperation");
+                await GetUserManager(scope).DetachPoliciesAsync(claimStore, user, 1, "resource:operation", "resource:otheroperation");
 
-            Assert.IsNull(GetUserManager().GetAttachedPoliciesAsync(claimStore, user, 1).Result.FirstOrDefault(x => x == "resource:operation"));
-            Assert.IsNull(GetUserManager().GetAttachedPoliciesAsync(claimStore, user, 1).Result.FirstOrDefault(x => x == "resource:otheroperation"));
+                Assert.IsNull(GetUserManager(scope).GetAttachedPoliciesAsync(claimStore, user, 1).Result.FirstOrDefault(x => x == "resource:operation"));
+                Assert.IsNull(GetUserManager(scope).GetAttachedPoliciesAsync(claimStore, user, 1).Result.FirstOrDefault(x => x == "resource:otheroperation"));
+            }
         }
 
         [TestMethod]
         public async Task GetAttachedPoliciesTest()
         {
-            await GetUserManager().AttachPoliciesAsync(claimStore, user, 1, "resource:operation", "resource:otheroperation");
+            using (var scope = serviceProvider.CreateScope())
+            {
+                await GetUserManager(scope).AttachPoliciesAsync(claimStore, user, 1, "resource:operation", "resource:otheroperation");
 
-            Assert.IsNotNull(GetUserManager().GetAttachedPoliciesAsync(claimStore, user, 1).Result.FirstOrDefault(x => x == "resource:operation"));
-            Assert.IsNotNull(GetUserManager().GetAttachedPoliciesAsync(claimStore, user, 1).Result.FirstOrDefault(x => x == "resource:otheroperation"));
+                Assert.IsNotNull(GetUserManager(scope).GetAttachedPoliciesAsync(claimStore, user, 1).Result.FirstOrDefault(x => x == "resource:operation"));
+                Assert.IsNotNull(GetUserManager(scope).GetAttachedPoliciesAsync(claimStore, user, 1).Result.FirstOrDefault(x => x == "resource:otheroperation"));
+            }
         }
 
         [TestMethod]
         public async Task GetAllAttachedPoliciesTest()
         {
-            await GetUserManager().AttachPoliciesAsync(claimStore, user, 1, "resource:operation", "resource:otheroperation");
-            await GetUserManager().AttachPoliciesAsync(claimStore, user, 2, "resource:operation");
+            using (var scope = serviceProvider.CreateScope())
+            {
+                await GetUserManager(scope).AttachPoliciesAsync(claimStore, user, 1, "resource:operation", "resource:otheroperation");
+                await GetUserManager(scope).AttachPoliciesAsync(claimStore, user, 2, "resource:operation");
 
-            var policies = GetUserManager().GetAttachedPoliciesAsync(claimStore, user).Result;
+                var policies = GetUserManager(scope).GetAttachedPoliciesAsync(claimStore, user).Result;
 
-            Assert.IsNotNull(policies[1].FirstOrDefault(x => x == "resource:operation"));
-            Assert.IsNotNull(policies[1].FirstOrDefault(x => x == "resource:otheroperation"));
-            Assert.IsNotNull(policies[2].FirstOrDefault(x => x == "resource:operation"));
-            Assert.IsNull(policies[2].FirstOrDefault(x => x == "resource:otheroperation"));
+                Assert.IsNotNull(policies[1].FirstOrDefault(x => x == "resource:operation"));
+                Assert.IsNotNull(policies[1].FirstOrDefault(x => x == "resource:otheroperation"));
+                Assert.IsNotNull(policies[2].FirstOrDefault(x => x == "resource:operation"));
+                Assert.IsNull(policies[2].FirstOrDefault(x => x == "resource:otheroperation"));
+            }
         }
 
         [TestMethod]
         public async Task GetUsersAttachedToPolicyTest()
         {
-            await GetUserManager().AttachPoliciesAsync(claimStore, user, 1, "resource:operation", "resource:otheroperation");
+            using (var scope = serviceProvider.CreateScope())
+            {
+                await GetUserManager(scope).AttachPoliciesAsync(claimStore, user, 1, "resource:operation", "resource:otheroperation");
 
-            Assert.IsNotNull(GetUserManager().GetUsersAttachedToPolicyAsync(claimStore,  "resource:operation", 1).Result.FirstOrDefault(x => x.Id == user.Id));
-            Assert.IsNotNull(GetUserManager().GetUsersAttachedToPolicyAsync(claimStore, "resource:otheroperation", 1).Result.FirstOrDefault(x => x.Id == user.Id));
+                Assert.IsNotNull(GetUserManager(scope).GetUsersAttachedToPolicyAsync(claimStore, "resource:operation", 1).Result.FirstOrDefault(x => x.Id == user.Id));
+                Assert.IsNotNull(GetUserManager(scope).GetUsersAttachedToPolicyAsync(claimStore, "resource:otheroperation", 1).Result.FirstOrDefault(x => x.Id == user.Id));
+            }
         }
 
-        private UserManager<User> GetUserManager()
+        [TestMethod]
+        public async Task UserAttachTest()
         {
-            var ret = serviceProvider.GetRequiredService(typeof(UserManager<User>)) as UserManager<User>;
+            using (var scope = serviceProvider.CreateScope())
+            {
+                await GetUserManager(scope).AddToRoleAsync(roleStore, user, 1, "admin");
+
+                Assert.IsNotNull(GetUserManager(scope).GetRolesAsync(roleStore, user, 1).Result.FirstOrDefault(x => x == "admin"));
+
+                var _user = await GetUserManager(scope).Users.Where(x => x.Id == user.Id).AsNoTracking().FirstOrDefaultAsync();
+
+                await GetUserManager(scope).AddToRoleAsync(roleStore, _user, 1, "manager");
+
+                Assert.IsNotNull(GetUserManager(scope).GetRolesAsync(roleStore, _user, 1).Result.FirstOrDefault(x => x == "manager"));
+            }
+        }
+
+        private UserManager<User> GetUserManager(IServiceScope scope)
+        {
+            var ret = scope.ServiceProvider.GetRequiredService(typeof(UserManager<User>)) as UserManager<User>;
 
             return ret;
         }

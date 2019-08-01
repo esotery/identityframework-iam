@@ -61,6 +61,18 @@ namespace IdentityFramework.Iam.Test
         }
 
         [TestMethod]
+        public void InvalidateCacheTest()
+        {
+            cache.AddRole("resouce:operation", "operator");
+
+            Assert.IsTrue(cache.GetRoles("resouce:operation").Contains("operator"));
+
+            cache.InvalidateCache();
+
+            Assert.IsFalse(cache.GetRoles("resouce:operation").Contains("operator"));
+        }
+
+        [TestMethod]
         public void AddOrUpdateClaimTest()
         {
             cache.AddOrUpdateClaim("resouce:operation", "resouce:operation");

@@ -67,6 +67,19 @@ namespace IdentityFramework.Iam.Test
             Assert.AreEqual(0, cache.GetRoles("resouce:operation", nonExistingTenantId).Count);
         }
 
+
+        [TestMethod]
+        public void InvalidateCacheTest()
+        {
+            cache.AddRole("resouce:operation", tenantId, "operator");
+
+            Assert.IsTrue(cache.GetRoles("resouce:operation", tenantId).Contains("operator"));
+
+            cache.InvalidateCache();
+
+            Assert.IsFalse(cache.GetRoles("resouce:operation", tenantId).Contains("operator"));
+        }
+
         [TestMethod]
         public void AddOrUpdateClaimTest()
         {

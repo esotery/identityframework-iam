@@ -75,5 +75,7 @@ namespace IdentityFramework.Iam.Core.Interface
         /// <param name="policyName">Name of the policy.</param>
         /// <returns></returns>
         bool NeedsUpdate(string policyName);
+
+        void InvalidateCache();
     }
 }
